@@ -1,16 +1,16 @@
 ### 프로젝트 개요
 
-`콘서트 예약 서비스`는 사용자들이 콘서트 좌석을 예약하고, 예약을 위한 잔액을 충전하며, 결제를 완료할 수 있는 시스템입니다. 
+콘서트 예약 서비스는 사용자들이 콘서트 좌석을 예약하고, 예약을 위한 잔액을 충전하며, 결제를 완료할 수 있는 시스템입니다. 
 이 서비스는 다수의 사용자가 동시에 접근할 수 있는 대기열 시스템을 포함하며, 동시성 이슈를 고려하여 설계하였습니다.
 
 ### 주요 기능 및 제약사항
 
-1. **유저 토큰 발급 API**: 사용자가 대기열에 들어가서 서비스를 이용할 수 있도록 토큰을 발급합니다.
-2. **예약 가능 날짜 / 좌석 API**: 예약 가능한 날짜와 해당 날짜의 좌석 정보를 조회합니다.
-3. **좌석 예약 요청 API**: 사용자가 좌석을 임시로 예약하고 결제가 이루어지지 않으면 임시 배정을 해제합니다.
-4. **잔액 충전 / 조회 API**: 사용자가 예약에 사용할 금액을 충전하고, 현재 잔액을 조회합니다.
-5. **결제 API**: 사용자가 좌석 예약 후 결제를 완료하면 좌석을 최종 배정합니다.
-6. **대기열 확인 API**: 사용자가 현재 대기열에서 자신의 위치를 확인할 수 있습니다.
+1. 유저 토큰 발급 API: 사용자가 대기열에 들어가서 서비스를 이용할 수 있도록 JWT 토큰을 발급합니다.
+2. 예약 가능 날짜 / 좌석 API: 예약 가능한 날짜와 해당 날짜의 좌석 정보를 조회합니다.
+3. 좌석 예약 요청 API: 사용자가 좌석을 임시로 예약하고 결제가 이루어지지 않으면 임시 배정을 해제합니다.
+4. 잔액 충전 / 조회 API: 사용자가 예약에 사용할 금액을 충전하고, 현재 잔액을 조회합니다.
+5. 결제 API: 사용자가 좌석 예약 후 결제를 완료하면 좌석을 최종 배정합니다.
+6. 대기열 확인 API: 사용자가 현재 대기열에서 자신의 위치를 확인할 수 있습니다.
 
 ### 프로젝트 계획
 
@@ -25,6 +25,7 @@
 - **프레임워크**: Spring Boot
 - **데이터베이스**: MySQL (대기열 관리 및 데이터 저장)
 - **테스트 프레임워크**: JUnit, Mockito
+- **인증**: JWT
 
 ### 3. 아키텍처 설계
 
@@ -42,54 +43,178 @@
 
 ### 4. API 설계
 
-**1️⃣ 유저 토큰 발급 API**
+### 4.1 유저 토큰 발급 API
 
-- **Endpoint**: `/api/v1/token`
+- **Endpoint**: `/api/v1/tokens`
 - **Method**: POST
-- **Request**: { "userId": "UUID" }
-- **Response**: { "token": "string", "queuePosition": "int", "remainingTime": "int" }
+- **Request**:
+    
+    ```json
+    {
+      "userId": "UUID"
+    }
+    ```
+    
+- **Response**:
+    
+    ```json
+    {
+      "token": "string",
+      "queuePosition": "int",
+      "remainingTime": "int"
+    }
+    ```
+    
 
-**2️⃣ 예약 가능 날짜 / 좌석 API**
+### 4.2 예약 가능 날짜 / 좌석 API
 
-- **Endpoint**: `/api/v1/reservations/dates`
+- **Endpoint**: `/api/v1/concerts`
 - **Method**: GET
-- **Response**: [ "2024-07-03", "2024-07-04", ... ]
-- **Endpoint**: `/api/v1/reservations/seats`
+- **Response**:
+    
+    ```json
+    [
+      {
+        "concertId": "UUID",
+        "concertName": "Concert Name",
+        "date": "2024-07-03"
+      },
+      {
+        "concertId": "UUID",
+        "concertName": "Concert Name",
+        "date": "2024-07-04"
+      },
+      ...
+    ]
+    ```
+    
+- **Endpoint**: `/api/v1/concerts/{concertId}/seats`
 - **Method**: GET
-- **Request**: { "date": "2024-07-03" }
-- **Response**: [ { "seatNumber": 1, "available": true }, { "seatNumber": 2, "available": false }, ... ]
+- **Response**:
+    
+    ```json
+    [
+      {
+        "seatNumber": 1,
+        "available": true
+      },
+      {
+        "seatNumber": 2,
+        "available": false
+      },
+      ...
+    ]
+    ```
+    
 
-**3️⃣ 좌석 예약 요청 API**
+### 4.3 좌석 예약 요청 API
 
 - **Endpoint**: `/api/v1/reservations`
 - **Method**: POST
-- **Request**: { "date": "2024-07-03", "seatNumber": 1, "token": "string" }
-- **Response**: { "reservationId": "UUID", "expiresAt": "timestamp" }
+- **Request**:
+    
+    ```json
+    {
+      "concertId": "UUID",
+      "seatNumber": 1,
+      "token": "string"
+    }
+    ```
+    
+- **Response**:
+    
+    ```json
+    {
+      "reservationId": "UUID",
+      "expiresAt": "timestamp"
+    }
+    ```
+    
 
-**4️⃣ 잔액 충전 / 조회 API**
+### 4.4 잔액 충전 / 조회 API
 
-- **Endpoint**: `/api/v1/balance`
+- **Endpoint**: `/api/v1/users/{userId}/balance`
 - **Method**: POST
-- **Request**: { "userId": "UUID", "amount": 100 }
-- **Response**: { "newBalance": 200 }
-- **Endpoint**: `/api/v1/balance`
+- **Request**:
+    
+    ```json
+    {
+      "userId": "UUID",
+      "amount": 100
+    }
+    ```
+    
+- **Response**:
+    
+    ```json
+    {
+      "newBalance": 200
+    }
+    ```
+    
+- **Endpoint**: `/api/v1/balances`
 - **Method**: GET
-- **Request**: { "userId": "UUID" }
-- **Response**: { "currentBalance": 200 }
+- **Request**:
+    
+    ```json
+    {
+      "userId": "UUID"
+    }
+    ```
+    
+- **Response**:
+    
+    ```json
+    {
+      "currentBalance": 200
+    }
+    ```
+    
 
-**5️⃣ 결제 API**
+### 4.5 결제 API
 
 - **Endpoint**: `/api/v1/payments`
 - **Method**: POST
-- **Request**: { "reservationId": "UUID", "amount": 100, "token": "string" }
-- **Response**: { "paymentId": "UUID", "status": "success" }
+- **Request**:
+    
+    ```json
+    {
+      "reservationId": "UUID",
+      "amount": 100,
+      "token": "string"
+    }
+    ```
+    
+- **Response**:
+    
+    ```json
+    {
+      "paymentId": "UUID",
+      "status": "success"
+    }
+    ```
+    
 
-**6️⃣ 대기열 확인 API**
+### 4.6 대기열 확인 API
 
-- **Endpoint**: `/api/v1/queue`
+- **Endpoint**: `/api/v1/queue/status`
 - **Method**: GET
-- **Request**: { "token": "string" }
-- **Response**: { "queuePosition": "int", "remainingTime": "int" }
+- **Request**:
+    
+    ```json
+    {
+      "token": "string"
+    }
+    ```
+    
+- **Response**:
+    
+    ```json
+    {
+      "queuePosition": "int",
+      "remainingTime": "int"
+    }
+    ```
 
 ## Milestone
 ```mermaid
@@ -126,17 +251,26 @@ sequenceDiagram
     participant DB
 
     User->>API Gateway: 토큰 발급 요청
-    API Gateway->>Auth Service: 유저 인증 및 토큰 발급 요청
-    Auth Service->>DB: 유저 정보 및 대기열 위치 저장
-    DB-->>Auth Service: 저장 완료
-    Auth Service-->>API Gateway: 토큰 및 대기열 정보 반환
-    API Gateway-->>User: 토큰 및 대기열 정보 전달
-
-    Note over Auth Service,DB: 실패 시
-    DB-->>Auth Service: 저장 실패
-    Auth Service-->>API Gateway: 토큰 발급 실패
-    API Gateway-->>User: 토큰 발급 실패 메시지 전달
-
+    API Gateway->>Auth Service: Authorization 헤더 확인
+    Auth Service->>DB: Queue 테이블에서 userId 조회
+    alt userId가 없음
+        DB-->>Auth Service: 조회 실패
+        Auth Service-->>API Gateway: 토큰 발급 실패
+        API Gateway-->>User: 토큰 발급 실패 메시지 전달
+    else userId가 있음
+        alt 상태가 ACTIVE
+            Auth Service-->>API Gateway: 토큰 발급
+            API Gateway-->>User: 토큰 및 대기열 정보 전달
+        else 상태가 WAITING
+            Auth Service-->>API Gateway: 대기 중
+            API Gateway-->>User: 대기 중 메시지 전달
+        else 상태가 EXPIRED
+            Auth Service->>DB: 새 Queue 데이터 생성
+            DB-->>Auth Service: 생성 완료
+            Auth Service-->>API Gateway: 토큰 발급
+            API Gateway-->>User: 토큰 및 대기열 정보 전달
+        end
+    end
 ```
 
 ### 예약 가능 날짜 조회 Use Case
@@ -159,10 +293,9 @@ sequenceDiagram
     DB-->>Reservation Service: 조회 실패
     Reservation Service-->>API Gateway: 예약 가능 날짜 조회 실패
     API Gateway-->>User: 예약 가능 날짜 조회 실패 메시지 전달
-
 ```
 
-### 예약 가능 좌석 조회 Use Case
+### 예약 가능 콘서트 조회 Use Case
 
 ```mermaid
 sequenceDiagram
@@ -171,18 +304,17 @@ sequenceDiagram
     participant Reservation Service
     participant DB
 
-    User->>API Gateway: 예약 가능 좌석 조회 요청
-    API Gateway->>Reservation Service: 예약 가능 좌석 조회
-    Reservation Service->>DB: 예약 가능 좌석 정보 조회
-    DB-->>Reservation Service: 예약 가능 좌석 정보 반환
-    Reservation Service-->>API Gateway: 예약 가능 좌석 정보 반환
-    API Gateway-->>User: 예약 가능 좌석 정보 전달
+    User->>API Gateway: 예약 가능 콘서트 조회 요청
+    API Gateway->>Reservation Service: 예약 가능 콘서트 조회
+    Reservation Service->>DB: 예약 가능 콘서트 정보 조회
+    DB-->>Reservation Service: 예약 가능 콘서트 정보 반환
+    Reservation Service-->>API Gateway: 예약 가능 콘서트 정보 반환
+    API Gateway-->>User: 예약 가능 콘서트 정보 전달
 
     Note over Reservation Service,DB: 실패 시
     DB-->>Reservation Service: 조회 실패
-    Reservation Service-->>API Gateway: 예약 가능 좌석 조회 실패
-    API Gateway-->>User: 예약 가능 좌석 조회 실패 메시지 전달
-
+    Reservation Service-->>API Gateway: 예약 가능 콘서트 조회 실패
+    API Gateway-->>User: 예약 가능 콘서트 조회 실패 메시지 전달
 ```
 
 ### 좌석 예약 요청 Use Case
@@ -205,7 +337,28 @@ sequenceDiagram
     DB-->>Reservation Service: 예약 실패
     Reservation Service-->>API Gateway: 좌석 예약 실패
     API Gateway-->>User: 좌석 예약 실패 메시지 전달
+```
 
+### 좌석 예약 요청 Use Case
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant API Gateway
+    participant Reservation Service
+    participant DB
+
+    User->>API Gateway: 좌석 예약 요청
+    API Gateway->>Reservation Service: 좌석 예약 요청 처리
+    Reservation Service->>DB: 좌석 예약 상태 업데이트 및 임시 배정 정보 저장
+    DB-->>Reservation Service: 좌석 예약 정보 반환
+    Reservation Service-->>API Gateway: 좌석 예약 정보 반환
+    API Gateway-->>User: 좌석 예약 정보 전달
+
+    Note over Reservation Service,DB: 실패 시
+    DB-->>Reservation Service: 예약 실패
+    Reservation Service-->>API Gateway: 좌석 예약 실패
+    API Gateway-->>User: 좌석 예약 실패 메시지 전달
 ```
 
 ### 잔액 충전 요청 Use Case
@@ -306,18 +459,26 @@ erDiagram
         TIMESTAMP createdAt "NOT NULL"
     }
 
+    CONCERTS {
+        STRING id PK "NOT NULL"
+        STRING concertName "NOT NULL"
+        DATE date "NOT NULL"
+        INT qauntity "NOT NULL"
+    }
+
     QUEUE {
         BIGINT id PK "AUTO_INCREMENT"
         STRING userId "NOT NULL"
         STRING token "NOT NULL"
         INT queuePosition "NOT NULL"
-        INT remainingTime "NOT NULL"
+        STRING status "NOT NULL / 상태: ACTIVE, WAITING, EXPIRED" 
         TIMESTAMP createdAt "NOT NULL"
+        TIMESTAMP expiresAt "NOT NULL"
     }
 
     SEATS {
         BIGINT id PK "AUTO_INCREMENT"
-        DATE date "NOT NULL"
+        STRING concertId "NOT NULL"
         INT seatNumber UK "NOT NULL"
         BOOLEAN isReserved UK "NOT NULL"
         STRING reservedBy "NOT NULL"
@@ -327,9 +488,9 @@ erDiagram
     RESERVATIONS {
         BIGINT id PK "AUTO_INCREMENT"
         STRING userId "NOT NULL"
-        DATE date "NOT NULL"
-        INT seatNumber "NOT NULL"
-        STRING reservationStatus "NOT NULL"
+        STRING concertId UK "NOT NULL"
+        INT seatNumber UK "NOT NULL"
+        STRING reservationStatus UK "NOT NULL / 상태: ACTIVE, WAITING, EXPIRED"
         TIMESTAMP reservedAt "NOT NULL"
     }
 
@@ -355,11 +516,13 @@ erDiagram
     USERS ||--o{ SEATS : "예약"
     USERS ||--o{ TOKENS : "발급"
 
+    CONCERTS ||--o{ SEATS : "가짐"
     QUEUE }o--|| USERS : "속함"
     TOKENS }o--|| USERS : "속함"
     SEATS }o--|| USERS : "예약된 사람"
+    SEATS }o--|| CONCERTS : "속함"
     RESERVATIONS }o--|| USERS : "속함"
+    RESERVATIONS }o--|| CONCERTS : "속함"
     PAYMENTS }o--|| USERS : "속함"
     PAYMENTS }o--|| RESERVATIONS : "관련"
-
 ```
