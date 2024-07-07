@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.aggregate.dto;
+package io.hhplus.concert.reservation.presentation.response;
 
 import lombok.Data;
 

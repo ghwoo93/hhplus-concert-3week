@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.controller;
+package io.hhplus.concert.reservation.presentation.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,19 +8,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.hhplus.concert.reservation.aggregate.dto.BalanceRequest;
-import io.hhplus.concert.reservation.aggregate.dto.BalanceResponse;
-import io.hhplus.concert.reservation.aggregate.dto.PaymentRequest;
-import io.hhplus.concert.reservation.aggregate.dto.PaymentResponse;
-import io.hhplus.concert.reservation.aggregate.dto.QueueRequest;
-import io.hhplus.concert.reservation.aggregate.dto.QueueResponse;
-import io.hhplus.concert.reservation.aggregate.dto.ReservationDateRequest;
-import io.hhplus.concert.reservation.aggregate.dto.ReservationSeat;
-import io.hhplus.concert.reservation.aggregate.dto.SeatReservationRequest;
-import io.hhplus.concert.reservation.aggregate.dto.SeatReservationResponse;
-import io.hhplus.concert.reservation.aggregate.dto.UserTokenRequest;
-import io.hhplus.concert.reservation.aggregate.dto.UserTokenResponse;
-import io.hhplus.concert.reservation.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
+import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
+import io.hhplus.concert.reservation.presentation.request.QueueRequest;
+import io.hhplus.concert.reservation.presentation.request.ReservationDateRequest;
+import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
+import io.hhplus.concert.reservation.presentation.request.UserTokenRequest;
+import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
+import io.hhplus.concert.reservation.presentation.response.PaymentResponse;
+import io.hhplus.concert.reservation.presentation.response.QueueResponse;
+import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
+import io.hhplus.concert.reservation.presentation.response.SeatReservationResponse;
+import io.hhplus.concert.reservation.presentation.response.UserTokenResponse;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ public class ConcertController {
     }
 
     @GetMapping("/reservations/seats")
-    public List<ReservationSeat> getAvailableSeats(@RequestBody ReservationDateRequest request) {
+    public List<ReservationResponse> getAvailableSeats(@RequestBody ReservationDateRequest request) {
         return concertFacade.getAvailableSeats(request);
     }
 

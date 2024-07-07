@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.aggregate.dto;
+package io.hhplus.concert.reservation.presentation.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReservationSeat {
+public class ReservationResponse {
     private int seatNumber;
     private boolean available;
 }

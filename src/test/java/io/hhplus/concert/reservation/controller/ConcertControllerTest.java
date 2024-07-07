@@ -2,7 +2,21 @@ package io.hhplus.concert.reservation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hhplus.concert.reservation.aggregate.dto.*;
-import io.hhplus.concert.reservation.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.presentation.controller.ConcertController;
+import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
+import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
+import io.hhplus.concert.reservation.presentation.request.QueueRequest;
+import io.hhplus.concert.reservation.presentation.request.ReservationDateRequest;
+import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
+import io.hhplus.concert.reservation.presentation.request.UserTokenRequest;
+import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
+import io.hhplus.concert.reservation.presentation.response.PaymentResponse;
+import io.hhplus.concert.reservation.presentation.response.QueueResponse;
+import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
+import io.hhplus.concert.reservation.presentation.response.SeatReservationResponse;
+import io.hhplus.concert.reservation.presentation.response.UserTokenResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,11 +103,11 @@ public class ConcertControllerTest {
         dateRequest.setDate("2024-07-03");
 
         // given: 예약 좌석 정보 생성
-        ReservationSeat seat1 = new ReservationSeat();
+        ReservationResponse seat1 = new ReservationResponse();
         seat1.setSeatNumber(1);
         seat1.setAvailable(true);
 
-        ReservationSeat seat2 = new ReservationSeat();
+        ReservationResponse seat2 = new ReservationResponse();
         seat2.setSeatNumber(2);
         seat2.setAvailable(false);
 

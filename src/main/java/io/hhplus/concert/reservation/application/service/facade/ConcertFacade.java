@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.service.facade;
+package io.hhplus.concert.reservation.application.service.facade;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,18 +6,18 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import io.hhplus.concert.reservation.aggregate.dto.BalanceRequest;
-import io.hhplus.concert.reservation.aggregate.dto.BalanceResponse;
-import io.hhplus.concert.reservation.aggregate.dto.PaymentRequest;
-import io.hhplus.concert.reservation.aggregate.dto.PaymentResponse;
-import io.hhplus.concert.reservation.aggregate.dto.QueueRequest;
-import io.hhplus.concert.reservation.aggregate.dto.QueueResponse;
-import io.hhplus.concert.reservation.aggregate.dto.ReservationDateRequest;
-import io.hhplus.concert.reservation.aggregate.dto.ReservationSeat;
-import io.hhplus.concert.reservation.aggregate.dto.SeatReservationRequest;
-import io.hhplus.concert.reservation.aggregate.dto.SeatReservationResponse;
-import io.hhplus.concert.reservation.aggregate.dto.UserTokenRequest;
-import io.hhplus.concert.reservation.aggregate.dto.UserTokenResponse;
+import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
+import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
+import io.hhplus.concert.reservation.presentation.request.QueueRequest;
+import io.hhplus.concert.reservation.presentation.request.ReservationDateRequest;
+import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
+import io.hhplus.concert.reservation.presentation.request.UserTokenRequest;
+import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
+import io.hhplus.concert.reservation.presentation.response.PaymentResponse;
+import io.hhplus.concert.reservation.presentation.response.QueueResponse;
+import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
+import io.hhplus.concert.reservation.presentation.response.SeatReservationResponse;
+import io.hhplus.concert.reservation.presentation.response.UserTokenResponse;
 
 @Component
 public class ConcertFacade {
@@ -34,10 +34,10 @@ public class ConcertFacade {
         return Arrays.asList("2024-07-03", "2024-07-04");
     }
 
-    public List<ReservationSeat> getAvailableSeats(ReservationDateRequest request) {
+    public List<ReservationResponse> getAvailableSeats(ReservationDateRequest request) {
         return Arrays.asList(
-                new ReservationSeat(1, true),
-                new ReservationSeat(2, false)
+                new ReservationResponse(1, true),
+                new ReservationResponse(2, false)
         );
     }
 
