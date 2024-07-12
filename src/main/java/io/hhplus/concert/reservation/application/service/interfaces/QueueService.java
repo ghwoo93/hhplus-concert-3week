@@ -1,7 +1,9 @@
 package io.hhplus.concert.reservation.application.service.interfaces;
 
-import io.hhplus.concert.reservation.application.dto.QueueDTO;
+import io.hhplus.concert.reservation.domain.model.Queue;
 
 public interface QueueService {
-    QueueDTO getQueueStatus(String token);
+    Queue getQueueStatus(String token);
+    void updateQueuePosition(Queue queue);
+    Queue createNewQueue(String userId);
 }
