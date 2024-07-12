@@ -1,76 +1,100 @@
 package io.hhplus.concert.reservation.application.service.facade;
 
-import java.util.Arrays;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
-import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
-import io.hhplus.concert.reservation.presentation.request.QueueRequest;
-import io.hhplus.concert.reservation.presentation.request.ReservationDateRequest;
-import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
-import io.hhplus.concert.reservation.presentation.request.UserTokenRequest;
+import io.hhplus.concert.reservation.application.dto.PaymentDTO;
+import io.hhplus.concert.reservation.application.dto.QueueDTO;
+import io.hhplus.concert.reservation.application.dto.ReservationDTO;
+import io.hhplus.concert.reservation.application.dto.TokenDTO;
+import io.hhplus.concert.reservation.application.service.interfaces.PaymentService;
+import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
+import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
+import io.hhplus.concert.reservation.application.service.interfaces.UserService;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
+import io.hhplus.concert.reservation.presentation.response.ConcertDateResponse;
 import io.hhplus.concert.reservation.presentation.response.PaymentResponse;
-import io.hhplus.concert.reservation.presentation.response.QueueResponse;
+import io.hhplus.concert.reservation.presentation.response.QueueStatusResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
-import io.hhplus.concert.reservation.presentation.response.SeatReservationResponse;
-import io.hhplus.concert.reservation.presentation.response.UserTokenResponse;
+import io.hhplus.concert.reservation.presentation.response.SeatResponse;
 
-@Component
+
+@Service
 public class ConcertFacade {
 
-    public UserTokenResponse generateUserToken(UserTokenRequest request) {
-        UserTokenResponse response = new UserTokenResponse();
-        response.setToken(UUID.randomUUID().toString());
-        response.setQueuePosition(1);
-        response.setRemainingTime(300);
-        return response;
+    private final UserService userService;
+    private final QueueService queueService;
+    private final ReservationService reservationService;
+    private final PaymentService paymentService;
+
+    @Autowired
+    public ConcertFacade(UserService userService, QueueService queueService, ReservationService reservationService, PaymentService paymentService) {
+        this.userService = userService;
+        this.queueService = queueService;
+        this.reservationService = reservationService;
+        this.paymentService = paymentService;
     }
 
-    public List<String> getAvailableDates() {
-        return Arrays.asList("2024-07-03", "2024-07-04");
+    public TokenDTO generateToken(String userId) {
+        return userService.generateToken(userId);
     }
 
-    public List<ReservationResponse> getAvailableSeats(ReservationDateRequest request) {
-        return Arrays.asList(
-                new ReservationResponse(1, true),
-                new ReservationResponse(2, false)
-        );
-    }
-
-    public SeatReservationResponse reserveSeat(SeatReservationRequest request) {
-        SeatReservationResponse response = new SeatReservationResponse();
-        response.setReservationId(UUID.randomUUID().toString());
-        response.setExpiresAt(System.currentTimeMillis() + 3600000); // 1 hour later
-        return response;
-    }
-
-    public BalanceResponse chargeBalance(BalanceRequest request) {
-        BalanceResponse response = new BalanceResponse();
-        response.setNewBalance(200);
-        return response;
+    public BalanceResponse rechargeBalance(String userId, BigDecimal amount) {
+        return userService.rechargeBalance(userId, amount);
     }
 
     public BalanceResponse getBalance(String userId) {
-        BalanceResponse response = new BalanceResponse();
-        response.setCurrentBalance(200);
-        return response;
+        return userService.getBalance(userId);
     }
 
-    public PaymentResponse makePayment(PaymentRequest request) {
-        PaymentResponse response = new PaymentResponse();
-        response.setPaymentId(UUID.randomUUID().toString());
-        response.setStatus("success");
-        return response;
+    public QueueStatusResponse getQueueStatus(String token) {
+        QueueDTO queueDTO = queueService.getQueueStatus(token);
+        return mapToQueueStatusResponse(queueDTO);
     }
 
-    public QueueResponse checkQueue(QueueRequest request) {
-        QueueResponse response = new QueueResponse();
-        response.setQueuePosition(1);
-        response.setRemainingTime(300);
-        return response;
+    private QueueStatusResponse mapToQueueStatusResponse(QueueDTO queueDTO) {
+        return new QueueStatusResponse(
+                queueDTO.getQueuePosition(),
+                queueDTO.getRemainingTime()
+        );
+    }
+
+    public ReservationResponse reserveSeat(String concertId, int seatNumber, String token) {
+        ReservationDTO reservationDTO = reservationService.reserveSeat(concertId, seatNumber, token);
+        return mapToReservationResponse(reservationDTO);
+    }
+
+    private ReservationResponse mapToReservationResponse(ReservationDTO reservationDTO) {
+        return new ReservationResponse(
+                reservationDTO.getReservationId(),
+                reservationDTO.getExpiresAt()
+        );
+    }
+
+    public List<ConcertDateResponse> getAvailableConcertDates() {
+        return reservationService.getAvailableConcertDates();
+    }
+
+    public List<SeatResponse> getAvailableSeats(String concertId) {
+        return reservationService.getAvailableSeats(concertId);
+    }
+
+    public PaymentResponse processPayment(String reservationId, BigDecimal amount, String token) {
+        PaymentDTO paymentDTO = paymentService.processPayment(reservationId, amount, token);
+        return mapToPaymentResponse(paymentDTO);
+    }
+
+    private PaymentResponse mapToPaymentResponse(PaymentDTO paymentDTO) {
+        return new PaymentResponse(
+                paymentDTO.getPaymentId(),
+                paymentDTO.getStatus()
+        );
     }
 }
+
+
+
+
