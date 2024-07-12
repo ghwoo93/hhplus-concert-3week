@@ -5,6 +5,9 @@ import io.hhplus.concert.reservation.infrastructure.entity.QueueEntity;
 
 public class QueueMapper {
     public static Queue toModel(QueueEntity entity) {
+        if (entity == null) {
+            return null;
+        }
         Queue queue = new Queue();
         queue.setId(entity.getId());
         queue.setUserId(entity.getUserId());

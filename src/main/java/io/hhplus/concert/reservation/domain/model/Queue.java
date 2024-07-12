@@ -62,6 +62,10 @@ public class Queue {
     }
 
     public enum QueueStatus {
-        ACTIVE, WAITING, EXPIRED
+        ACTIVE, WAITING, EXPIRED;
+
+        public static QueueStatus fromString(String status) {
+            return valueOf(status.toUpperCase());
+        }
     }
 }

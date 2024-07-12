@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
 import io.hhplus.concert.reservation.presentation.response.PaymentResponse;
 
@@ -15,10 +15,10 @@ import io.hhplus.concert.reservation.presentation.response.PaymentResponse;
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
     
-    private final ConcertFacade concertFacade;
+    private final ConcertFacadeImpl concertFacade;
 
     @Autowired
-    public PaymentController(ConcertFacade concertFacade) {
+    public PaymentController(ConcertFacadeImpl concertFacade) {
         this.concertFacade = concertFacade;
     }
 

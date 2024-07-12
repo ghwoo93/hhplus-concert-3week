@@ -73,4 +73,12 @@ public class QueueServiceImpl implements QueueService {
         Queue newQueue = new Queue(userId);
         return QueueMapper.toModel(queueRepository.save(QueueMapper.toEntity(newQueue)));
     }
+
+    @Override
+    @Transactional
+    public Queue getOrCreateQueueForUser(String userId) {
+        return queueRepository.findByUserId(userId)
+                .map(QueueMapper::toModel)
+                .orElseGet(() -> createNewQueue(userId));
+    }
 }

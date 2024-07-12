@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.presentation.request.QueueRequest;
 import io.hhplus.concert.reservation.presentation.response.QueueStatusResponse;
 
@@ -15,10 +15,10 @@ import io.hhplus.concert.reservation.presentation.response.QueueStatusResponse;
 @RequestMapping("/api/v1/queue")
 public class QueueController {
     
-    private final ConcertFacade concertFacade;
+    private final ConcertFacadeImpl concertFacade;
 
     @Autowired
-    public QueueController(ConcertFacade concertFacade) {
+    public QueueController(ConcertFacadeImpl concertFacade) {
         this.concertFacade = concertFacade;
     }
 

@@ -6,4 +6,5 @@ public interface QueueService {
     Queue getQueueStatus(String token);
     void updateQueuePosition(Queue queue);
     Queue createNewQueue(String userId);
+    Queue getOrCreateQueueForUser(String userId);
 }

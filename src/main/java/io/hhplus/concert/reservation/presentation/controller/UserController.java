@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
 import io.hhplus.concert.reservation.presentation.request.UserRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
@@ -22,10 +22,10 @@ import java.math.BigDecimal;
 @RequestMapping("/api/v1/users")
 public class UserController {
     
-    private final ConcertFacade concertFacade;
+    private final ConcertFacadeImpl concertFacade;
 
     @Autowired
-    public UserController(ConcertFacade concertFacade) {
+    public UserController(ConcertFacadeImpl concertFacade) {
         this.concertFacade = concertFacade;
     }
 

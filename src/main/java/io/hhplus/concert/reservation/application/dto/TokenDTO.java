@@ -7,6 +7,9 @@ import lombok.Data;
 @AllArgsConstructor
 public class TokenDTO {
     private String token;
+    private String status;
     private int queuePosition;
-    private int remainingTime;
+    private long remainingTime;
+
+
 }

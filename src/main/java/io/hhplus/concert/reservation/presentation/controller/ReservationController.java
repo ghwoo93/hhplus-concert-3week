@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
 import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
 import io.hhplus.concert.reservation.presentation.request.QueueRequest;
@@ -30,10 +30,10 @@ import io.hhplus.concert.reservation.presentation.response.SeatResponse;
 @RequestMapping("/api/v1/reservations")
 public class ReservationController {
     
-    private final ConcertFacade concertFacade;
+    private final ConcertFacadeImpl concertFacade;
 
     @Autowired
-    public ReservationController(ConcertFacade concertFacade) {
+    public ReservationController(ConcertFacadeImpl concertFacade) {
         this.concertFacade = concertFacade;
     }
 
