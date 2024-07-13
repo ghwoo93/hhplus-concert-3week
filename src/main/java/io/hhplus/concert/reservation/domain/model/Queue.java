@@ -25,8 +25,33 @@ public class Queue {
         this.userId = userId;
         this.status = QueueStatus.WAITING;
         this.createdAt = LocalDateTime.now();
-        this.expiresAt = LocalDateTime.now().plusHours(1); // Example: expires after 1 hour
+        this.expiresAt = LocalDateTime.now().plusHours(1);
+        this.lastUpdatedAt = LocalDateTime.now();
         this.token = generateToken();
+    }
+
+    public long getRemainingTimeInSeconds() {
+        LocalDateTime now = LocalDateTime.now();
+        
+        if (lastUpdatedAt == null) {
+            lastUpdatedAt = now;
+        }
+        
+        switch (status) {
+            case WAITING:
+                LocalDateTime nextUpdate = this.lastUpdatedAt.plusSeconds(10);
+                return Math.max(0, ChronoUnit.SECONDS.between(now, nextUpdate));
+            case ACTIVE:
+                return Math.max(0, ChronoUnit.SECONDS.between(now, expiresAt));
+            case EXPIRED:
+            default:
+                return 0;
+        }
+    }
+
+    public void setExpirationTime(long secondsFromNow) {
+        this.expiresAt = LocalDateTime.now().plusSeconds(secondsFromNow);
+        this.lastUpdatedAt = LocalDateTime.now();
     }
 
     public long getRemainingTime() {
@@ -35,22 +60,6 @@ public class Queue {
 
     public int getQueuePosition() {
         return queuePosition;
-    }
-
-    public long getRemainingTimeInSeconds() {
-        LocalDateTime now = LocalDateTime.now();
-        
-        switch (status) {
-            case WAITING:
-                LocalDateTime nextUpdate = this.lastUpdatedAt.plusSeconds(10);
-                return Math.max(0, ChronoUnit.SECONDS.between(now, nextUpdate));
-            case ACTIVE:
-                LocalDateTime expirationTime = this.lastUpdatedAt.plusMinutes(1);
-                return Math.max(0, ChronoUnit.SECONDS.between(now, expirationTime));
-            case EXPIRED:
-            default:
-                return 0;
-        }
     }
 
     private String generateToken() {

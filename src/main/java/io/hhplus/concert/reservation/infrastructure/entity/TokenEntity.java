@@ -34,7 +34,13 @@ public class TokenEntity {
         return new Token(token, userId, createdAt, expiresAt);
     }
 
+    // toQueue 메서드 제거 또는 수정
     public Queue toQueue() {
-        return new Queue(queuePosition, remainingTime);
+        Queue queue = new Queue();
+        queue.setUserId(this.userId);
+        queue.setToken(this.token);
+        queue.setCreatedAt(this.createdAt);
+        queue.setExpiresAt(this.expiresAt);
+        return queue;
     }
 }

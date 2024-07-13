@@ -7,11 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.hhplus.concert.reservation.application.dto.QueueDTO;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
-import io.hhplus.concert.reservation.application.service.interfaces.PaymentService;
 import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
-import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
 import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
-import io.hhplus.concert.reservation.application.service.interfaces.UserService;
 import io.hhplus.concert.reservation.domain.model.Queue;
 import io.hhplus.concert.reservation.domain.model.Token;
 
@@ -19,21 +16,26 @@ import io.hhplus.concert.reservation.domain.model.Token;
 @Service
 public class ConcertFacadeImpl implements ConcertFacade {
 
-    private final UserService userService;
     private final QueueService queueService;
     private final TokenService tokenService;
-    private final ReservationService reservationService;
-    private final PaymentService paymentService;
+    // private final UserService userService;
+    // private final ReservationService reservationService;
+    // private final PaymentService paymentService;
 
     @Autowired
-    public ConcertFacadeImpl(UserService userService, QueueService queueService, TokenService tokenService,
-                            ReservationService reservationService, PaymentService paymentService) {
-        this.userService = userService;
+    public ConcertFacadeImpl(QueueService queueService, TokenService tokenService) {
         this.queueService = queueService;
         this.tokenService = tokenService;
-        this.reservationService = reservationService;
-        this.paymentService = paymentService;
     }
+    // @Autowired
+    // public ConcertFacadeImpl(UserService userService, QueueService queueService, TokenService tokenService,
+    //                         ReservationService reservationService, PaymentService paymentService) {
+    //     this.userService = userService;
+    //     this.queueService = queueService;
+    //     this.tokenService = tokenService;
+    //     this.reservationService = reservationService;
+    //     this.paymentService = paymentService;
+    // }
 
     @Override
     @Transactional

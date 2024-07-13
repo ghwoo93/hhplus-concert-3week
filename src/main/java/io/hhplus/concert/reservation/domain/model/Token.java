@@ -16,6 +16,13 @@ public class Token {
     private LocalDateTime expiresAt;
     private String status;
 
+    public Token(String token, String userId, LocalDateTime createdAt, LocalDateTime expiresAt) {
+        this.token = token;
+        this.userId = userId;
+        this.createdAt = createdAt;
+        this.expiresAt = expiresAt;
+    }    
+
     public Queue toQueue() {
         Queue queue = new Queue();
         queue.setUserId(this.userId);
