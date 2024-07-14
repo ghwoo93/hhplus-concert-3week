@@ -71,7 +71,12 @@ public class QueueServiceImpl implements QueueService {
     @Transactional
     public Queue createNewQueue(String userId) {
         Queue newQueue = new Queue(userId);
+        newQueue.setQueuePosition(calculateQueuePosition());
         return QueueMapper.toModel(queueRepository.save(QueueMapper.toEntity(newQueue)));
+    }
+
+    private int calculateQueuePosition() {
+        return (int) queueRepository.count() + 1;
     }
 
     @Override

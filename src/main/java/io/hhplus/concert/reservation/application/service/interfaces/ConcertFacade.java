@@ -6,4 +6,5 @@ import io.hhplus.concert.reservation.application.dto.TokenDTO;
 public interface ConcertFacade {
     TokenDTO issueToken(String userId);
     QueueDTO checkQueueStatus(String token);
+    QueueDTO createQueue(String userId);
 }

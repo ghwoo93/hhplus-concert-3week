@@ -64,6 +64,13 @@ public class ConcertFacadeImpl implements ConcertFacade {
         return new QueueDTO(queue.getQueuePosition(), queue.getStatus().name(), queue.getRemainingTimeInSeconds());
     }
 
+    @Override
+    @Transactional
+    public QueueDTO createQueue(String userId) {
+        Queue queue = queueService.createNewQueue(userId);
+        return new QueueDTO(queue.getQueuePosition(), queue.getStatus().name(), queue.getRemainingTimeInSeconds());
+    }    
+
     // public TokenDTO generateToken(String userId) {
     //     return userService.generateToken(userId);
     // }

@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class QueueStatusResponse {
+public class TokenResponse {
+    private String token;
     private int queuePosition;
     private long remainingTime;
 }

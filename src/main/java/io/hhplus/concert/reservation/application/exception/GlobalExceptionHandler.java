@@ -13,9 +13,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(UserAlreadyInQueueException.class)
+    public ResponseEntity<String> handleUserAlreadyInQueueException(UserAlreadyInQueueException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(UserNotInQueueException.class)
+    public ResponseEntity<String> handleUserNotInQueueException(UserNotInQueueException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(TokenNotFoundException.class)
     public ResponseEntity<String> handleTokenNotFoundException(TokenNotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<String> handleTokenExpiredException(TokenExpiredException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(SeatNotFoundException.class)

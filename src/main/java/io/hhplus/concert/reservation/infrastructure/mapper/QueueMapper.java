@@ -20,6 +20,9 @@ public class QueueMapper {
     }
 
     public static QueueEntity toEntity(Queue model) {
+        if (model == null) {
+            return null;
+        }        
         QueueEntity entity = new QueueEntity();
         entity.setId(model.getId());
         entity.setUserId(model.getUserId());
