@@ -1,12 +1,17 @@
 package io.hhplus.concert.reservation.application.service.facade;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.hhplus.concert.reservation.application.dto.ConcertDTO;
 import io.hhplus.concert.reservation.application.dto.QueueDTO;
+import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
+import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
 import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
 import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
 import io.hhplus.concert.reservation.domain.model.Queue;
@@ -18,14 +23,17 @@ public class ConcertFacadeImpl implements ConcertFacade {
 
     private final QueueService queueService;
     private final TokenService tokenService;
+    private final ConcertService concertService;
     // private final UserService userService;
     // private final ReservationService reservationService;
     // private final PaymentService paymentService;
 
     @Autowired
-    public ConcertFacadeImpl(QueueService queueService, TokenService tokenService) {
+    public ConcertFacadeImpl(QueueService queueService, TokenService tokenService,
+                            ConcertService concertService) {
         this.queueService = queueService;
         this.tokenService = tokenService;
+        this.concertService = concertService;
     }
     // @Autowired
     // public ConcertFacadeImpl(UserService userService, QueueService queueService, TokenService tokenService,
@@ -69,7 +77,17 @@ public class ConcertFacadeImpl implements ConcertFacade {
     public QueueDTO createQueue(String userId) {
         Queue queue = queueService.createNewQueue(userId);
         return new QueueDTO(queue.getQueuePosition(), queue.getStatus().name(), queue.getRemainingTimeInSeconds());
-    }    
+    }
+
+    @Override
+    public List<ConcertDTO> getAllConcerts() {
+        return concertService.getAllConcerts();
+    }
+
+    @Override
+    public List<SeatDTO> getSeatsByConcertId(String concertId) {
+        return concertService.getSeatsByConcertId(concertId);
+    }
 
     // public TokenDTO generateToken(String userId) {
     //     return userService.generateToken(userId);
