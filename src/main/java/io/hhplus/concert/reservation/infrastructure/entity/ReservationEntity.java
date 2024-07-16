@@ -19,4 +19,5 @@ public class ReservationEntity {
     private int seatNumber;
     private String reservationStatus;
     private LocalDateTime reservedAt;
+    private LocalDateTime performanceDate;
 }

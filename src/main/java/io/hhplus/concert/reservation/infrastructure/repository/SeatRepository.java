@@ -1,16 +1,15 @@
 package io.hhplus.concert.reservation.infrastructure.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import io.hhplus.concert.reservation.domain.model.Seat;
-
-import java.util.List;
+import io.hhplus.concert.reservation.infrastructure.entity.SeatEntity;
 
 @Repository
-public interface SeatRepository extends JpaRepository<Seat, Long> {
-    Optional<Seat> findByConcertIdAndSeatNumber(String concertId, int seatNumber);
-    List<Seat> findByConcertId(String concertId);
+public interface SeatRepository extends JpaRepository<SeatEntity, Long> {
+    Optional<SeatEntity> findByConcertIdAndSeatNumber(String concertId, int seatNumber);
+    List<SeatEntity> findByConcertId(String concertId);
 }
