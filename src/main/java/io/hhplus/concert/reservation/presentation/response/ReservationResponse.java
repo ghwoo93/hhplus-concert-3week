@@ -1,5 +1,7 @@
 package io.hhplus.concert.reservation.presentation.response;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReservationResponse {
-    private int seatNumber;
-    private boolean available;
+    private String reservationId;
+    private LocalDateTime expiresAt;
 }

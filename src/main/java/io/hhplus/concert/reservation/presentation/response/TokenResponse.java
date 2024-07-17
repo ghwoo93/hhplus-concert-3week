@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class BalanceResponse {
-    private int newBalance;
-    private int currentBalance;
+public class TokenResponse {
+    private String token;
+    private int queuePosition;
+    private long remainingTime;
 }
