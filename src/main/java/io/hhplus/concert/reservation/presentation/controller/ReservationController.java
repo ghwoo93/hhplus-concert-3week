@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,7 +15,9 @@ import io.hhplus.concert.reservation.application.dto.ConcertDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.infrastructure.mapper.ResponseMapper;
+import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.ConcertDateResponse;
+import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
 import io.hhplus.concert.reservation.presentation.response.SeatResponse;
 
 @RestController
@@ -27,11 +31,11 @@ public class ReservationController {
         this.concertFacade = concertFacade;
     }
 
-    // @PostMapping
-    // public ResponseEntity<ReservationResponse> reserveSeat(@RequestBody ReservationRequest reservationRequest) {
-    //     ReservationResponse reservationResponse = concertFacade.reserveSeat(reservationRequest.getConcertId(), reservationRequest.getSeatNumber(), reservationRequest.getToken());
-    //     return ResponseEntity.ok(reservationResponse);
-    // }
+    @PostMapping
+    public ResponseEntity<ReservationResponse> reserveSeat(@RequestBody SeatReservationRequest seatReservationRequest) {
+        ReservationResponse reservationResponse = concertFacade.reserveSeat(seatReservationRequest);
+        return ResponseEntity.ok(reservationResponse);
+    }
 
     @GetMapping("/dates")
     public ResponseEntity<List<ConcertDateResponse>> getAvailableConcertDates() {
