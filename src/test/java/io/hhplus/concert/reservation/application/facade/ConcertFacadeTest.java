@@ -179,18 +179,22 @@ public class ConcertFacadeTest {
         request.setSeatNumber(1);
         request.setUserId("user1");
 
-        ReservationResponse expectedResponse = new ReservationResponse("reservation1", LocalDateTime.now().plusMinutes(5));
+        LocalDateTime now = LocalDateTime.now();
 
         when(tokenService.isTokenValid(anyString())).thenReturn(true);
-        when(reservationService.reserveSeat(anyString(), anyInt(), anyString())).thenReturn(new Reservation("reservation1", "user1", "concert1", 1, "TEMPORARY", LocalDateTime.now()));
+        when(reservationService.reserveSeat(anyString(), anyInt(), anyString()))
+            .thenReturn(new Reservation("reservation1", "user1", "concert1", 1, "TEMPORARY", now));
 
         // Act
         ReservationResponse result = concertFacade.reserveSeat(request);
 
         // Assert
         assertNotNull(result);
-        assertEquals(expectedResponse.getReservationId(), result.getReservationId());
-        assertTrue(result.getExpiresAt().isAfter(LocalDateTime.now()));
+        assertEquals("reservation1", result.getReservationId());
+        
+        // 수정된 부분: 날짜 비교 로직 개선
+        assertTrue(result.getExpiresAt().isAfter(now), "Expiration time should be in the future");
+        assertTrue(result.getExpiresAt().isBefore(now.plusMinutes(6)), "Expiration time should be within 6 minutes");
 
         verify(tokenService).isTokenValid("validToken");
         verify(reservationService).reserveSeat("concert1", 1, "user1");

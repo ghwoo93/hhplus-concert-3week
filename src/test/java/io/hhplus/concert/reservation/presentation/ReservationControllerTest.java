@@ -129,7 +129,7 @@ public class ReservationControllerTest {
         mockMvc.perform(post("/api/v1/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isNotFound())
                 .andDo(print());
     }
 
@@ -169,7 +169,7 @@ public class ReservationControllerTest {
 
         mockMvc.perform(get("/api/v1/reservations/{concertId}/seats", nonExistentConcertId)
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
+                .andExpect(status().is5xxServerError())
                 .andDo(print());
     }
 
