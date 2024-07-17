@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class SeatReservationRequest {
-    private String date;
-    private int seatNumber;
     private String token;
+    private String concertId;
+    private int seatNumber;
+    private String userId;
 }

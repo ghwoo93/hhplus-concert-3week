@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 import io.hhplus.concert.reservation.infrastructure.entity.PaymentEntity;
 
 @Repository
-public interface PaymentRepository extends JpaRepository<PaymentEntity, String> {
+public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
 }

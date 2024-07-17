@@ -10,6 +10,4 @@ public class TokenDTO {
     private String status;
     private int queuePosition;
     private long remainingTime;
-
-
 }
