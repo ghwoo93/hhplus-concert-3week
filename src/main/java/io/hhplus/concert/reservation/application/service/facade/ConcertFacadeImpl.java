@@ -10,12 +10,17 @@ import io.hhplus.concert.reservation.application.dto.ConcertDTO;
 import io.hhplus.concert.reservation.application.dto.QueueDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
+import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
 import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
+import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
 import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
 import io.hhplus.concert.reservation.domain.model.Queue;
+import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
+import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
 
 
 @Service
@@ -24,26 +29,17 @@ public class ConcertFacadeImpl implements ConcertFacade {
     private final QueueService queueService;
     private final TokenService tokenService;
     private final ConcertService concertService;
-    // private final UserService userService;
-    // private final ReservationService reservationService;
-    // private final PaymentService paymentService;
+    private final ReservationService reservationService;
+
 
     @Autowired
     public ConcertFacadeImpl(QueueService queueService, TokenService tokenService,
-                            ConcertService concertService) {
+                            ConcertService concertService, ReservationService reservationService) {
         this.queueService = queueService;
         this.tokenService = tokenService;
         this.concertService = concertService;
+        this.reservationService = reservationService;
     }
-    // @Autowired
-    // public ConcertFacadeImpl(UserService userService, QueueService queueService, TokenService tokenService,
-    //                         ReservationService reservationService, PaymentService paymentService) {
-    //     this.userService = userService;
-    //     this.queueService = queueService;
-    //     this.tokenService = tokenService;
-    //     this.reservationService = reservationService;
-    //     this.paymentService = paymentService;
-    // }
 
     @Override
     @Transactional
@@ -89,63 +85,19 @@ public class ConcertFacadeImpl implements ConcertFacade {
         return concertService.getSeatsByConcertId(concertId);
     }
 
-    // public TokenDTO generateToken(String userId) {
-    //     return userService.generateToken(userId);
-    // }
+    @Override
+    @Transactional
+    public ReservationResponse reserveSeat(SeatReservationRequest request) {
+        if (!tokenService.isTokenValid(request.getToken())) {
+            throw new TokenNotFoundException();
+        }
 
-    // public BalanceResponse rechargeBalance(String userId, BigDecimal amount) {
-    //     return userService.rechargeBalance(userId, amount);
-    // }
+        Reservation reservation = reservationService.reserveSeat(
+            request.getConcertId(), 
+            request.getSeatNumber(), 
+            request.getUserId()
+        );
+        return new ReservationResponse(reservation.getId(), reservation.getReservedAt());
+    }
 
-    // public BalanceResponse getBalance(String userId) {
-    //     return userService.getBalance(userId);
-    // }
-
-    // public QueueStatusResponse getQueueStatus(String token) {
-    //     QueueDTO queueDTO = queueService.getQueueStatus(token);
-    //     return mapToQueueStatusResponse(queueDTO);
-    // }
-
-    // private QueueStatusResponse mapToQueueStatusResponse(QueueDTO queueDTO) {
-    //     return new QueueStatusResponse(
-    //             queueDTO.getQueuePosition(),
-    //             queueDTO.getRemainingTime()
-    //     );
-    // }
-
-    // public ReservationResponse reserveSeat(String concertId, int seatNumber, String token) {
-    //     ReservationDTO reservationDTO = reservationService.reserveSeat(concertId, seatNumber, token);
-    //     return mapToReservationResponse(reservationDTO);
-    // }
-
-    // private ReservationResponse mapToReservationResponse(ReservationDTO reservationDTO) {
-    //     return new ReservationResponse(
-    //             reservationDTO.getReservationId(),
-    //             reservationDTO.getExpiresAt()
-    //     );
-    // }
-
-    // public List<ConcertDateResponse> getAvailableConcertDates() {
-    //     return reservationService.getAvailableConcertDates();
-    // }
-
-    // public List<SeatResponse> getAvailableSeats(String concertId) {
-    //     return reservationService.getAvailableSeats(concertId);
-    // }
-
-    // public PaymentResponse processPayment(String reservationId, BigDecimal amount, String token) {
-    //     PaymentDTO paymentDTO = paymentService.processPayment(reservationId, amount, token);
-    //     return mapToPaymentResponse(paymentDTO);
-    // }
-
-    // private PaymentResponse mapToPaymentResponse(PaymentDTO paymentDTO) {
-    //     return new PaymentResponse(
-    //             paymentDTO.getPaymentId(),
-    //             paymentDTO.getStatus()
-    //     );
-    // }
 }
-
-
-
-
