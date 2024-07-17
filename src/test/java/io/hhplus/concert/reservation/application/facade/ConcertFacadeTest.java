@@ -1,6 +1,8 @@
 package io.hhplus.concert.reservation.application.facade;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
@@ -15,13 +17,18 @@ import org.mockito.MockitoAnnotations;
 import io.hhplus.concert.reservation.application.dto.ConcertDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
+import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
 import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
+import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
 import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
 import io.hhplus.concert.reservation.domain.model.Queue;
+import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
+import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
 
 public class ConcertFacadeTest {
     @Mock
@@ -33,12 +40,15 @@ public class ConcertFacadeTest {
     @Mock
     private ConcertService concertService;
 
+    @Mock
+    private ReservationService reservationService;
+
     private ConcertFacade concertFacade;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        concertFacade = new ConcertFacadeImpl(queueService, tokenService, concertService);
+        concertFacade = new ConcertFacadeImpl(queueService, tokenService, concertService, reservationService);
     }
 
     @Test
@@ -159,4 +169,44 @@ public class ConcertFacadeTest {
         
         verify(concertService, times(1)).getSeatsByConcertId(concertId);
     }
+
+    @Test
+    void reserveSeat_ShouldReturnReservationResponse() {
+        // Arrange
+        SeatReservationRequest request = new SeatReservationRequest();
+        request.setToken("validToken");
+        request.setConcertId("concert1");
+        request.setSeatNumber(1);
+        request.setUserId("user1");
+
+        ReservationResponse expectedResponse = new ReservationResponse("reservation1", LocalDateTime.now().plusMinutes(5));
+
+        when(tokenService.isTokenValid(anyString())).thenReturn(true);
+        when(reservationService.reserveSeat(anyString(), anyInt(), anyString())).thenReturn(new Reservation("reservation1", "user1", "concert1", 1, "TEMPORARY", LocalDateTime.now()));
+
+        // Act
+        ReservationResponse result = concertFacade.reserveSeat(request);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedResponse.getReservationId(), result.getReservationId());
+        assertTrue(result.getExpiresAt().isAfter(LocalDateTime.now()));
+
+        verify(tokenService).isTokenValid("validToken");
+        verify(reservationService).reserveSeat("concert1", 1, "user1");
+    }
+
+    @Test
+    void reserveSeat_WithInvalidToken_ShouldThrowTokenNotFoundException() {
+        // Arrange
+        SeatReservationRequest request = new SeatReservationRequest();
+        request.setToken("invalidToken");
+
+        when(tokenService.isTokenValid(anyString())).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(TokenNotFoundException.class, () -> concertFacade.reserveSeat(request));
+        verify(tokenService).isTokenValid("invalidToken");
+        verifyNoInteractions(reservationService);
+    }    
 }
