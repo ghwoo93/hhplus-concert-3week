@@ -1,5 +1,6 @@
 package io.hhplus.concert.reservation.application.service.facade;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,7 +98,12 @@ public class ConcertFacadeImpl implements ConcertFacade {
             request.getSeatNumber(), 
             request.getUserId()
         );
-        return new ReservationResponse(reservation.getId(), reservation.getReservedAt());
+
+        // 만료 시간을 5분 후로 설정
+        LocalDateTime expiresAt = reservation.getReservedAt().plusMinutes(5);
+
+        return new ReservationResponse(reservation.getId(), expiresAt);
+        // return new ReservationResponse(reservation.getId(), reservation.getReservedAt());
     }
 
 }
