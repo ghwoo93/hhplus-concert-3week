@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.hhplus.concert.reservation.application.dto.ConcertDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
+import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
 import io.hhplus.concert.reservation.infrastructure.mapper.ResponseMapper;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.ConcertDateResponse;
@@ -24,10 +24,10 @@ import io.hhplus.concert.reservation.presentation.response.SeatResponse;
 @RequestMapping("/api/v1/reservations")
 public class ReservationController {
     
-    private final ConcertFacadeImpl concertFacade;
+    private final ConcertFacade concertFacade;
 
     @Autowired
-    public ReservationController(ConcertFacadeImpl concertFacade) {
+    public ReservationController(ConcertFacade concertFacade) {
         this.concertFacade = concertFacade;
     }
 
