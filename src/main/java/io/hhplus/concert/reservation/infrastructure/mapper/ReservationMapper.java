@@ -24,5 +24,5 @@ public class ReservationMapper {
             entity.getReservationStatus(),
             entity.getReservedAt()
         );
-    }    
+    }
 }

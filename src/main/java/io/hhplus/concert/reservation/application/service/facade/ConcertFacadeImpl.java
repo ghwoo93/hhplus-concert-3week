@@ -1,5 +1,6 @@
 package io.hhplus.concert.reservation.application.service.facade;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -8,19 +9,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.hhplus.concert.reservation.application.dto.ConcertDTO;
+import io.hhplus.concert.reservation.application.dto.PaymentDTO;
 import io.hhplus.concert.reservation.application.dto.QueueDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
 import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
+import io.hhplus.concert.reservation.application.service.interfaces.PaymentService;
 import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
 import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
 import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
+import io.hhplus.concert.reservation.application.service.interfaces.UserService;
 import io.hhplus.concert.reservation.domain.model.Queue;
 import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.domain.model.Token;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
+import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
 
 
@@ -31,22 +36,26 @@ public class ConcertFacadeImpl implements ConcertFacade {
     private final TokenService tokenService;
     private final ConcertService concertService;
     private final ReservationService reservationService;
-
+    private final PaymentService paymentService;
+    private final UserService userService;
 
     @Autowired
     public ConcertFacadeImpl(QueueService queueService, TokenService tokenService,
-                            ConcertService concertService, ReservationService reservationService) {
+                             ConcertService concertService, ReservationService reservationService,
+                             PaymentService paymentService, UserService userService) {
         this.queueService = queueService;
         this.tokenService = tokenService;
         this.concertService = concertService;
         this.reservationService = reservationService;
+        this.paymentService = paymentService;
+        this.userService = userService;
     }
 
     @Override
     @Transactional
     public TokenDTO issueToken(String userId) {
         Queue queue = queueService.getOrCreateQueueForUser(userId);
-        
+    
         switch (queue.getStatus()) {
             case ACTIVE:
                 Token token = tokenService.createToken(userId);
@@ -106,4 +115,24 @@ public class ConcertFacadeImpl implements ConcertFacade {
         // return new ReservationResponse(reservation.getId(), reservation.getReservedAt());
     }
 
+    @Override
+    @Transactional
+    public BalanceResponse rechargeBalance(String userId, BigDecimal amount) {
+        return userService.rechargeBalance(userId, amount);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BalanceResponse getBalance(String userId) {
+        return userService.getBalance(userId);
+    }
+
+    @Override
+    @Transactional
+    public PaymentDTO processPayment(String reservationId, BigDecimal amount, String token) {
+        if (!tokenService.isTokenValid(token)) {
+            throw new TokenNotFoundException();
+        }
+        return paymentService.processPayment(reservationId, amount, token);
+    }    
 }

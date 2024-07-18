@@ -21,13 +21,13 @@ public class Token {
         this.userId = userId;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
-    }    
+    }
 
     public Queue toQueue() {
         Queue queue = new Queue();
         queue.setUserId(this.userId);
         queue.setCreatedAt(this.createdAt);
-        
+    
         // status 변환 로직에 예외 처리 추가
         try {
             queue.setStatus(Queue.QueueStatus.valueOf(this.status.toUpperCase()));
@@ -36,7 +36,7 @@ public class Token {
             queue.setStatus(Queue.QueueStatus.WAITING); // 예: 기본값으로 WAITING 설정
             // logger.warn("Invalid status value: " + this.status + ". Setting to WAITING.");
         }
-        
+    
         queue.setLastUpdatedAt(LocalDateTime.now());
         // 큐 위치는 getQueueStatus 메서드에서 계산
         return queue;

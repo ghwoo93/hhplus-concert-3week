@@ -61,5 +61,5 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConcertNotFoundException.class)
     public ResponseEntity<String> handleConcertNotFoundException(ConcertNotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
-    }    
+    }
 }

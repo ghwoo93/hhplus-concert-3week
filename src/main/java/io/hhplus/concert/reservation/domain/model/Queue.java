@@ -32,11 +32,11 @@ public class Queue {
 
     public long getRemainingTimeInSeconds() {
         LocalDateTime now = LocalDateTime.now();
-        
+    
         if (lastUpdatedAt == null) {
             lastUpdatedAt = now;
         }
-        
+    
         switch (status) {
             case WAITING:
                 LocalDateTime nextUpdate = this.lastUpdatedAt.plusSeconds(10);
