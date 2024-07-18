@@ -1,6 +1,7 @@
 package io.hhplus.concert.reservation.domain.service;
 
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +13,15 @@ import io.hhplus.concert.reservation.application.exception.QueueExpiredException
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.exception.UserNotInQueueException;
 import io.hhplus.concert.reservation.domain.model.Queue;
+import io.hhplus.concert.reservation.infrastructure.entity.QueueEntity;
 import io.hhplus.concert.reservation.infrastructure.mapper.QueueMapper;
 import io.hhplus.concert.reservation.infrastructure.repository.QueueRepository;
 
 @Service
 public class QueueServiceImpl implements QueueService {
     
-    
     private final QueueRepository queueRepository;
+    private final ReentrantLock updateLock = new ReentrantLock();
 
     @Autowired
     public QueueServiceImpl(QueueRepository queueRepository) {
@@ -54,7 +56,10 @@ public class QueueServiceImpl implements QueueService {
     public void updateQueuePositions() {
         if (updateLock.tryLock()) {
             try {
-                List<Queue> waitingQueues = queueRepository.findByStatusOrderByCreatedAt(Queue.QueueStatus.WAITING);
+                List<QueueEntity> waitingQueueEntities = queueRepository.findByStatusOrderByCreatedAt(Queue.QueueStatus.WAITING);
+                List<Queue> waitingQueues = waitingQueueEntities.stream()
+                                                                .map(QueueMapper::toModel)
+                                                                .collect(Collectors.toList());
                 for (int i = 0; i < waitingQueues.size(); i++) {
                     Queue queue = waitingQueues.get(i);
                     queue.updateQueuePosition(i + 1);

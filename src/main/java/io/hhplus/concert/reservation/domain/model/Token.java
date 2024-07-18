@@ -1,6 +1,7 @@
 package io.hhplus.concert.reservation.domain.model;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,6 +24,14 @@ public class Token {
         this.expiresAt = expiresAt;
     }
 
+    private Token(String userId) {
+        this.token = UUID.randomUUID().toString();
+        this.userId = userId;
+        this.createdAt = LocalDateTime.now();
+        this.expiresAt = LocalDateTime.now().plusHours(24); // 24시간 후 만료
+        this.status = "ACTIVE";
+    }
+
     public Queue toQueue() {
         Queue queue = new Queue();
         queue.setUserId(this.userId);
@@ -42,7 +51,16 @@ public class Token {
         return queue;
     }
 
+    public static Token createNewToken(String userId) {
+        return new Token(userId);
+    }
+
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiresAt);
+    }
+
+    public void invalidate() {
+        this.expiresAt = LocalDateTime.now();
+        this.status = "EXPIRED";
     }
 }

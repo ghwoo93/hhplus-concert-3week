@@ -8,11 +8,10 @@ public class QueueMapper {
         if (entity == null) {
             return null;
         }
-        Queue queue = new Queue();
+        Queue queue = new Queue(entity.getUserId());
         queue.setId(entity.getId());
-        queue.setUserId(entity.getUserId());
         queue.setToken(entity.getToken());
-        queue.setQueuePosition(entity.getQueuePosition());
+        queue.updateQueuePosition(entity.getQueuePosition());
         queue.setStatus(entity.getStatus());
         queue.setCreatedAt(entity.getCreatedAt());
         queue.setExpiresAt(entity.getExpiresAt());

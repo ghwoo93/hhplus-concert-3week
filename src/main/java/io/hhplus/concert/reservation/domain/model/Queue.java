@@ -55,6 +55,11 @@ public class Queue {
         }
     }
 
+    public void expire() {
+        this.status = QueueStatus.EXPIRED;
+        this.lastUpdatedAt = LocalDateTime.now();
+    }
+
     public void setExpirationTime(long secondsFromNow) {
         this.expiresAt = LocalDateTime.now().plusSeconds(secondsFromNow);
         this.lastUpdatedAt = LocalDateTime.now();
@@ -64,8 +69,8 @@ public class Queue {
         return Duration.between(LocalDateTime.now(), expiresAt).toMinutes();
     }
 
-    public AtomicInteger getQueuePosition() {
-        return queuePosition;
+    public int getQueuePosition() {
+        return this.queuePosition.get();
     }
 
     private String generateToken() {

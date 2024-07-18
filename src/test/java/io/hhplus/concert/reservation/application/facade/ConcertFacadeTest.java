@@ -21,7 +21,6 @@ import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.exception.InsufficientBalanceException;
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
-import io.hhplus.concert.reservation.application.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.domain.model.Queue;
 import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.domain.model.Token;
@@ -59,7 +58,7 @@ public class ConcertFacadeTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        concertFacade = new ConcertFacad    eImpl(queueService, tokenService, concertService, 
+        concertFacade = new ConcertFacadeImpl(queueService, tokenService, concertService, 
                                             reservationService, paymentService, userService);
     }
 
@@ -68,7 +67,7 @@ public class ConcertFacadeTest {
         String userId = "user1";
         Queue newQueue = new Queue(userId);  // 생성자를 사용하여 Queue 객체 생성
         newQueue.setStatus(Queue.QueueStatus.ACTIVE);
-        newQueue.setQueuePosition(1);
+        newQueue.updateQueuePosition(1);
         newQueue.setExpirationTime(3600); // 1시간 후 만료
     
         Token newToken = new Token();
@@ -98,7 +97,7 @@ public class ConcertFacadeTest {
     
         Queue newQueue = new Queue(userId);
         newQueue.setStatus(Queue.QueueStatus.ACTIVE);
-        newQueue.setQueuePosition(1);
+        newQueue.updateQueuePosition(1);
         newQueue.setExpirationTime(3600); // 1시간 후 만료
     
         Token newToken = new Token();
@@ -127,7 +126,7 @@ public class ConcertFacadeTest {
         String userId = "user2";
         Queue waitingQueue = new Queue(userId);
         waitingQueue.setStatus(Queue.QueueStatus.WAITING);
-        waitingQueue.setQueuePosition(10);
+        waitingQueue.updateQueuePosition(10);
         waitingQueue.setLastUpdatedAt(LocalDateTime.now().minusSeconds(1)); // Ensure that the last updated time is set correctly
     
         when(queueService.getOrCreateQueueForUser(userId)).thenReturn(waitingQueue);
@@ -271,18 +270,18 @@ public class ConcertFacadeTest {
     @Test
     void processPayment_Success() {
         String reservationId = "res1";
-        int amount = 1000;
+        BigDecimal amount = BigDecimal.valueOf(1000);
         String token = "validToken";
         PaymentDTO expectedPaymentDTO = new PaymentDTO("payment1", "COMPLETED");
 
         when(tokenService.isTokenValid(token)).thenReturn(true);
-        when(paymentService.processPayment(reservationId, BigDecimal.valueOf(amount), token)).thenReturn(expectedPaymentDTO);
+        when(paymentService.processPayment(reservationId, token, amount)).thenReturn(expectedPaymentDTO);
 
-        PaymentDTO result = concertFacade.processPayment(reservationId, BigDecimal.valueOf(amount), token);
+        PaymentDTO result = concertFacade.processPayment(reservationId, amount, token);
 
         assertEquals(expectedPaymentDTO, result);
         verify(tokenService).isTokenValid(token);
-        verify(paymentService).processPayment(reservationId, BigDecimal.valueOf(amount), token);
+        verify(paymentService).processPayment(reservationId, token, amount);
     }
 
     @Test
@@ -299,13 +298,13 @@ public class ConcertFacadeTest {
     @Test
     void processPayment_InsufficientBalance() {
         String reservationId = "res1";
-        int amount = 1000;
+        BigDecimal amount = BigDecimal.valueOf(1000);
         String token = "validToken";
 
         when(tokenService.isTokenValid(token)).thenReturn(true);
-        when(paymentService.processPayment(reservationId, BigDecimal.valueOf(amount), token))
+        when(paymentService.processPayment(reservationId, token, amount))
             .thenThrow(new InsufficientBalanceException());
 
-        assertThrows(InsufficientBalanceException.class, () -> concertFacade.processPayment(reservationId, BigDecimal.valueOf(amount), token));
+        assertThrows(InsufficientBalanceException.class, () -> concertFacade.processPayment(reservationId, amount, token));
     }
 }

@@ -36,4 +36,10 @@ public class SeatEntity {
 
     @Column(nullable = false)
     private LocalDateTime reservedUntil;
+
+    public void reserve(String userId) {
+        this.isReserved = true;
+        this.reservedBy = userId;
+        this.reservedUntil = LocalDateTime.now().plusMinutes(5);
+    }
 }
