@@ -33,12 +33,7 @@ public class ConcertServiceImpl implements ConcertService {
     public List<ConcertDTO> getAllConcerts() {
         List<ConcertEntity> concertEntities = concertRepository.findAll();
         return concertEntities.stream()
-                .map(concertEntity -> {
-                    // Convert ConcertEntity to Concert domain model
-                    Concert concert = ConcertMapper.entityToDomain(concertEntity, null);
-                    // Convert Concert domain model to ConcertDTO
-                    return ConcertMapper.domainToDto(concert);
-                })
+                .map(this::convertToConcertDTO)
                 .collect(Collectors.toList());
     }
 
@@ -46,12 +41,17 @@ public class ConcertServiceImpl implements ConcertService {
     public List<SeatDTO> getSeatsByConcertId(String concertId) {
         List<SeatEntity> seatEntities = seatRepository.findByConcertId(concertId);
         return seatEntities.stream()
-                .map(seatEntity -> {
-                    // Convert SeatEntity to Seat domain model
-                    Seat seat = SeatMapper.entityToDomain(seatEntity);
-                    // Convert Seat domain model to SeatDTO
-                    return SeatMapper.domainToDto(seat);
-                })
+                .map(this::convertToSeatDTO)
                 .collect(Collectors.toList());
+    }
+
+    private ConcertDTO convertToConcertDTO(ConcertEntity concertEntity) {
+        Concert concert = ConcertMapper.entityToDomain(concertEntity, null);
+        return ConcertMapper.domainToDto(concert);
+    }
+
+    private SeatDTO convertToSeatDTO(SeatEntity seatEntity) {
+        Seat seat = SeatMapper.entityToDomain(seatEntity);
+        return SeatMapper.domainToDto(seat);
     }
 }
