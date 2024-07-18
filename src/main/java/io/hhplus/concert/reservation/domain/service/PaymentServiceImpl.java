@@ -25,8 +25,16 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentDTO processPayment(String userId, String reservationId, BigDecimal amount) {
-        Payment payment = new Payment(null, userId, reservationId, amount, "COMPLETED", LocalDateTime.now());
-        Payment savedPayment = PaymentMapper.entityToDomain(paymentRepository.save(PaymentMapper.domainToEntity(payment)));
+        Payment payment = createPayment(userId, reservationId, amount);
+        Payment savedPayment = savePayment(payment);
         return PaymentMapper.domainToDto(savedPayment);
+    }
+
+    private Payment createPayment(String userId, String reservationId, BigDecimal amount) {
+        return new Payment(null, userId, reservationId, amount, "COMPLETED", LocalDateTime.now());
+    }
+
+    private Payment savePayment(Payment payment) {
+        return PaymentMapper.entityToDomain(paymentRepository.save(PaymentMapper.domainToEntity(payment)));
     }
 }

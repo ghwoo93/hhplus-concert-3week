@@ -25,39 +25,47 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public BalanceResponse rechargeBalance(String userId, BigDecimal amount) {
-        UserEntity userEntity = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        User user = userEntity.toUser();
-        user.setBalance(user.getBalance().add(amount));
-        userRepository.save(new UserEntity(user));
-        return new BalanceResponse(user.getBalance().intValue(), user.getBalance().intValue());
+        User user = findUserById(userId);
+        user.rechargeBalance(amount);
+        User updatedUser = saveUser(user);
+        return createBalanceResponse(updatedUser.getBalance());
     }
 
     @Override
     @Transactional(readOnly = true)
     public BalanceResponse getBalance(String userId) {
-        UserEntity userEntity = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        User user = userEntity.toUser();
-        return new BalanceResponse(user.getBalance().intValue(), user.getBalance().intValue());
+        User user = findUserById(userId);
+        return createBalanceResponse(user.getBalance());
     }
 
     @Override
     @Transactional(readOnly = true)
     public User getUser(String userId) {
-        return userRepository.findById(userId)
-                .map(UserEntity::toUser)
-                .orElse(null);
+        return findUserById(userId);
     }
 
     @Override
     @Transactional
     public BalanceResponse deductBalance(String userId, BigDecimal amount) {
-        UserEntity userEntity = userRepository.findById(userId)
+        User user = findUserById(userId);
+        user.deductBalance(amount);
+        User updatedUser = saveUser(user);
+        return createBalanceResponse(updatedUser.getBalance());
+    }
+
+    private User findUserById(String userId) {
+        return userRepository.findById(userId)
+                .map(UserEntity::toUser)
                 .orElseThrow(UserNotFoundException::new);
-        User user = userEntity.toUser();
-        user.setBalance(user.getBalance().subtract(amount));
-        userRepository.save(new UserEntity(user));
-        return new BalanceResponse(user.getBalance().intValue(), user.getBalance().intValue());
-    }    
+    }
+
+    private User saveUser(User user) {
+        UserEntity savedEntity = userRepository.save(new UserEntity(user));
+        return savedEntity.toUser();
+    }
+
+    private BalanceResponse createBalanceResponse(BigDecimal balance) {
+        int balanceValue = balance.intValue();
+        return new BalanceResponse(balanceValue, balanceValue);
+    }
 }

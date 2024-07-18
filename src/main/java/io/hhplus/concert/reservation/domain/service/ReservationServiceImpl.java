@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class ReservationServiceImpl implements ReservationService {
     
@@ -37,32 +36,12 @@ public class ReservationServiceImpl implements ReservationService {
     public Reservation reserveSeat(String concertId, int seatNumber, String userId) {
         long startTime = System.currentTimeMillis();
 
-        seatRepository.findByConcertIdAndSeatNumber(concertId, seatNumber)
-            .ifPresent(seat -> {
-                if (seat.isReserved()) {
-                    throw new SeatAlreadyReservedException();
-                }
-                seat.setReserved(true);
-                seat.setReservedBy(userId);
-                seat.setReservedUntil(LocalDateTime.now().plusMinutes(5));
-                seatRepository.save(seat);
-            });
-
-        Reservation reservation = new Reservation(
-            UUID.randomUUID().toString(),
-            userId,
-            concertId,
-            seatNumber,
-            "TEMPORARY",
-            LocalDateTime.now()
-        );
-
-        Reservation savedReservation = ReservationMapper.toDomain(
-            reservationRepository.save(ReservationMapper.toEntity(reservation))
-        );
+        reserveSeat(concertId, seatNumber, userId);
+        Reservation reservation = createReservation(concertId, seatNumber, userId);
+        Reservation savedReservation = saveReservation(reservation);
 
         long endTime = System.currentTimeMillis();
-        logger.info("Seat reservation took {} ms", endTime - startTime);
+        log.info("Seat reservation took {} ms", endTime - startTime);
 
         return savedReservation;
     }
@@ -84,32 +63,31 @@ public class ReservationServiceImpl implements ReservationService {
         });
     }
 
-    // @Override
-    // public ReservationDTO reserveSeat(String concertId, int seatNumber, String token) {
-    //     Seat seat = seatRepository.findByConcertIdAndSeatNumber(concertId, seatNumber).orElseThrow(() -> new SeatNotFoundException());
-    //     if (seat.isReserved()) {
-    //         throw new SeatAlreadyReservedException();
-    //     }
-    //     seat.setReserved(true);
-    //     seat.setReservedBy(token);
-    //     seat.setReservedUntil(LocalDateTime.now().plusMinutes(5));
-    //     seatRepository.save(seat);
-    //     Reservation reservation = new Reservation(UUID.randomUUID().toString(), concertId, seatNumber, "RESERVED", LocalDateTime.now());
-    //     reservationRepository.save(reservation);
-    //     return new ReservationDTO(reservation.getId(), seat.getReservedUntil());
-    // }
+    private void reserveSeat(String concertId, int seatNumber, String userId) {
+        seatRepository.findByConcertIdAndSeatNumber(concertId, seatNumber)
+            .ifPresent(seat -> {
+                if (seat.isReserved()) {
+                    throw new SeatAlreadyReservedException();
+                }
+                seat.reserve(userId);
+                seatRepository.save(seat);
+            });
+    }
 
-    // @Override
-    // public List<ConcertDateResponse> getAvailableConcertDates() {
-    //     return concertRepository.findAll().stream()
-    //         .map(concert -> new ConcertDateResponse(concert.getId(), concert.getConcertName(), concert.getDate()))
-    //         .collect(Collectors.toList());
-    // }
+    private Reservation createReservation(String concertId, int seatNumber, String userId) {
+        return new Reservation(
+            UUID.randomUUID().toString(),
+            userId,
+            concertId,
+            seatNumber,
+            "TEMPORARY",
+            LocalDateTime.now()
+        );
+    }
 
-    // @Override
-    // public List<SeatResponse> getAvailableSeats(String concertId) {
-    //     return seatRepository.findByConcertId(concertId).stream()
-    //         .map(seat -> new SeatResponse(seat.getSeatNumber(), !seat.isReserved()))
-    //         .collect(Collectors.toList());
-    // }
+    private Reservation saveReservation(Reservation reservation) {
+        return ReservationMapper.toDomain(
+            reservationRepository.save(ReservationMapper.toEntity(reservation))
+        );
+    }
 }

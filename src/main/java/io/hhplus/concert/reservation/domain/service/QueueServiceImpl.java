@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,33 +29,75 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public Queue getQueueStatus(String token) {
-        Queue queue = queueRepository.findByToken(token)
-                .map(QueueMapper::toModel)
-                .orElseThrow(() -> new TokenNotFoundException());
-
+        Queue queue = findQueueByToken(token);
         if (queue.isExpired()) {
-            queue.setStatus(Queue.QueueStatus.EXPIRED);
-            queueRepository.save(QueueMapper.toEntity(queue));
+            expireQueue(queue);
             throw new QueueExpiredException();
         }
-
         if (queue.getStatus() == Queue.QueueStatus.WAITING) {
             updateQueuePosition(queue);
         }
-
         return queue;
     }
 
     @Override
     @Transactional
     public void updateQueuePosition(Queue queue) {
-        List<Queue> waitingQueues = queueRepository.findByStatusOrderByCreatedAt(Queue.QueueStatus.WAITING.name())
+        List<Queue> waitingQueues = getWaitingQueues();
+        int position = calculatePosition(waitingQueues, queue.getUserId());
+        queue.updateQueuePosition(position);
+        saveQueue(queue);
+    }
+
+    @Scheduled(fixedRate = 10000) // 10초마다 실행
+    @Transactional
+    public void updateQueuePositions() {
+        if (updateLock.tryLock()) {
+            try {
+                List<Queue> waitingQueues = queueRepository.findByStatusOrderByCreatedAt(Queue.QueueStatus.WAITING);
+                for (int i = 0; i < waitingQueues.size(); i++) {
+                    Queue queue = waitingQueues.get(i);
+                    queue.updateQueuePosition(i + 1);
+                    queueRepository.save(queue);
+                }
+            } finally {
+                updateLock.unlock();
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public Queue createNewQueue(String userId) {
+        Queue newQueue = new Queue(userId);
+        newQueue.updateQueuePosition(calculateQueuePosition());
+        return saveQueue(newQueue);
+    }
+
+    @Override
+    @Transactional
+    public Queue getOrCreateQueueForUser(String userId) {
+        return queueRepository.findByUserId(userId)
+                .map(QueueMapper::toModel)
+                .orElseGet(() -> createNewQueue(userId));
+    }
+
+    private Queue findQueueByToken(String token) {
+        return queueRepository.findByToken(token)
+                .map(QueueMapper::toModel)
+                .orElseThrow(() -> new TokenNotFoundException());
+    }
+
+    private void expireQueue(Queue queue) {
+        queue.expire();
+        saveQueue(queue);
+    }
+
+    private List<Queue> getWaitingQueues() {
+        return queueRepository.findByStatusOrderByCreatedAt(Queue.QueueStatus.WAITING.name())
                 .stream()
                 .map(QueueMapper::toModel)
                 .collect(Collectors.toList());
-        int position = calculatePosition(waitingQueues, queue.getUserId());
-        queue.setQueuePosition(position);
-        queueRepository.save(QueueMapper.toEntity(queue));
     }
 
     private int calculatePosition(List<Queue> waitingQueues, String userId) {
@@ -66,23 +109,11 @@ public class QueueServiceImpl implements QueueService {
         throw new UserNotInQueueException();
     }
 
-    @Override
-    @Transactional
-    public Queue createNewQueue(String userId) {
-        Queue newQueue = new Queue(userId);
-        newQueue.setQueuePosition(calculateQueuePosition());
-        return QueueMapper.toModel(queueRepository.save(QueueMapper.toEntity(newQueue)));
-    }
-
     private int calculateQueuePosition() {
         return (int) queueRepository.count() + 1;
     }
 
-    @Override
-    @Transactional
-    public Queue getOrCreateQueueForUser(String userId) {
-        return queueRepository.findByUserId(userId)
-                .map(QueueMapper::toModel)
-                .orElseGet(() -> createNewQueue(userId));
+    private Queue saveQueue(Queue queue) {
+        return QueueMapper.toModel(queueRepository.save(QueueMapper.toEntity(queue)));
     }
 }

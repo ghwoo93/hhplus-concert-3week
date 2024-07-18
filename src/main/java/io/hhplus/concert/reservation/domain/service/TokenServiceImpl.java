@@ -23,13 +23,8 @@ public class TokenServiceImpl implements TokenService {
     @Override
     @Transactional
     public Token createToken(String userId) {
-        Token newToken = new Token();
-        newToken.setUserId(userId);
-        newToken.setToken(generateUniqueToken());
-        newToken.setCreatedAt(LocalDateTime.now());
-        newToken.setExpiresAt(LocalDateTime.now().plusHours(24)); // 24시간 후 만료
-
-        return TokenMapper.toModel(tokenRepository.save(TokenMapper.toEntity(newToken)));
+        Token newToken = Token.createNewToken(userId);
+        return saveToken(newToken);
     }
 
     @Override
@@ -44,8 +39,8 @@ public class TokenServiceImpl implements TokenService {
     @Transactional
     public void invalidateToken(String token) {
         Token existingToken = getToken(token);
-        existingToken.setExpiresAt(LocalDateTime.now());
-        tokenRepository.save(TokenMapper.toEntity(existingToken));
+        existingToken.invalidate();
+        saveToken(existingToken);
     }
 
     @Override
@@ -59,7 +54,7 @@ public class TokenServiceImpl implements TokenService {
         }
     }
 
-    private String generateUniqueToken() {
-        return UUID.randomUUID().toString();
+    private Token saveToken(Token token) {
+        return TokenMapper.toModel(tokenRepository.save(TokenMapper.toEntity(token)));
     }
 }
