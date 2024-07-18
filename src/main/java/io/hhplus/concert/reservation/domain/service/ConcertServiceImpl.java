@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.application.service.impl;
+package io.hhplus.concert.reservation.domain.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import io.hhplus.concert.reservation.application.dto.ConcertDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
 import io.hhplus.concert.reservation.domain.model.Concert;
 import io.hhplus.concert.reservation.domain.model.Seat;
 import io.hhplus.concert.reservation.infrastructure.entity.ConcertEntity;

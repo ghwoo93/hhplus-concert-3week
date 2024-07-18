@@ -15,7 +15,7 @@ import io.hhplus.concert.reservation.application.exception.TokenExpiredException
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.exception.UserAlreadyInQueueException;
 import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
+import io.hhplus.concert.reservation.application.facade.ConcertFacade;
 import io.hhplus.concert.reservation.presentation.request.QueueRequest;
 import io.hhplus.concert.reservation.presentation.request.QueueStatusRequest;
 import io.hhplus.concert.reservation.presentation.response.QueueResponse;

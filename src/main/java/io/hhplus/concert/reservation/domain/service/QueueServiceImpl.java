@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.application.service.impl;
+package io.hhplus.concert.reservation.domain.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import io.hhplus.concert.reservation.application.exception.QueueExpiredException;
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.exception.UserNotInQueueException;
-import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
 import io.hhplus.concert.reservation.domain.model.Queue;
 import io.hhplus.concert.reservation.infrastructure.mapper.QueueMapper;
 import io.hhplus.concert.reservation.infrastructure.repository.QueueRepository;

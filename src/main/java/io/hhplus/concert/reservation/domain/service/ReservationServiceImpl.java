@@ -1,8 +1,6 @@
-package io.hhplus.concert.reservation.application.service.impl;
+package io.hhplus.concert.reservation.domain.service;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 
 import org.slf4j.Logger;
@@ -10,20 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import io.hhplus.concert.reservation.application.dto.ReservationDTO;
 import io.hhplus.concert.reservation.application.exception.SeatAlreadyReservedException;
-import io.hhplus.concert.reservation.application.exception.SeatNotFoundException;
-import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
 import io.hhplus.concert.reservation.domain.model.Reservation;
-import io.hhplus.concert.reservation.domain.model.Seat;
 import io.hhplus.concert.reservation.infrastructure.mapper.ReservationMapper;
-import io.hhplus.concert.reservation.infrastructure.repository.ConcertRepository;
 import io.hhplus.concert.reservation.infrastructure.repository.ReservationRepository;
 import io.hhplus.concert.reservation.infrastructure.repository.SeatRepository;
-import io.hhplus.concert.reservation.presentation.controller.QueueController;
-import io.hhplus.concert.reservation.presentation.response.ConcertDateResponse;
-import io.hhplus.concert.reservation.presentation.response.SeatResponse;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -74,6 +65,23 @@ public class ReservationServiceImpl implements ReservationService {
         logger.info("Seat reservation took {} ms", endTime - startTime);
 
         return savedReservation;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Reservation getReservation(String reservationId) {
+        return reservationRepository.findById(reservationId)
+                .map(ReservationMapper::toDomain)
+                .orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public void updateReservationStatus(String reservationId, String status) {
+        reservationRepository.findById(reservationId).ifPresent(reservation -> {
+            reservation.setReservationStatus(status);
+            reservationRepository.save(reservation);
+        });
     }
 
     // @Override

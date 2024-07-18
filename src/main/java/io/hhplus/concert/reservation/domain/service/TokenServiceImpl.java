@@ -1,6 +1,4 @@
-package io.hhplus.concert.reservation.application.service.impl;
-
-
+package io.hhplus.concert.reservation.domain.service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -9,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
-import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
 import io.hhplus.concert.reservation.domain.model.Token;
 import io.hhplus.concert.reservation.infrastructure.mapper.TokenMapper;
 import io.hhplus.concert.reservation.infrastructure.repository.TokenRepository;

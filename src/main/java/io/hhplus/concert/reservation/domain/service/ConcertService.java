@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.application.service.interfaces;
+package io.hhplus.concert.reservation.domain.service;
 
 import java.util.List;
 

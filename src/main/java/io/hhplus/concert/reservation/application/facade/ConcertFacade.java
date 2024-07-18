@@ -1,4 +1,4 @@
-package io.hhplus.concert.reservation.application.service.interfaces;
+package io.hhplus.concert.reservation.application.facade;
 
 import java.math.BigDecimal;
 import java.util.List;

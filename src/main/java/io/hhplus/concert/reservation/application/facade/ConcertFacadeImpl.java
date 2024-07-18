@@ -1,33 +1,19 @@
-package io.hhplus.concert.reservation.application.service.facade;
+package io.hhplus.concert.reservation.application.facade;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import io.hhplus.concert.reservation.application.dto.ConcertDTO;
-import io.hhplus.concert.reservation.application.dto.PaymentDTO;
-import io.hhplus.concert.reservation.application.dto.QueueDTO;
-import io.hhplus.concert.reservation.application.dto.SeatDTO;
-import io.hhplus.concert.reservation.application.dto.TokenDTO;
-import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
-import io.hhplus.concert.reservation.application.service.interfaces.PaymentService;
-import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
-import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
-import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
-import io.hhplus.concert.reservation.application.service.interfaces.UserService;
-import io.hhplus.concert.reservation.domain.model.Queue;
-import io.hhplus.concert.reservation.domain.model.Reservation;
-import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.application.dto.*;
+import io.hhplus.concert.reservation.application.exception.*;
+import io.hhplus.concert.reservation.domain.model.*;
+import io.hhplus.concert.reservation.domain.service.*;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class ConcertFacadeImpl implements ConcertFacade {
@@ -39,7 +25,6 @@ public class ConcertFacadeImpl implements ConcertFacade {
     private final PaymentService paymentService;
     private final UserService userService;
 
-    @Autowired
     public ConcertFacadeImpl(QueueService queueService, TokenService tokenService,
                              ConcertService concertService, ReservationService reservationService,
                              PaymentService paymentService, UserService userService) {
@@ -55,7 +40,10 @@ public class ConcertFacadeImpl implements ConcertFacade {
     @Transactional
     public TokenDTO issueToken(String userId) {
         Queue queue = queueService.getOrCreateQueueForUser(userId);
-    
+        return handleQueueStatus(queue, userId);
+    }
+
+    private TokenDTO handleQueueStatus(Queue queue, String userId) {
         switch (queue.getStatus()) {
             case ACTIVE:
                 Token token = tokenService.createToken(userId);
@@ -63,9 +51,9 @@ public class ConcertFacadeImpl implements ConcertFacade {
             case WAITING:
                 return new TokenDTO(null, "WAITING", queue.getQueuePosition(), queue.getRemainingTimeInSeconds());
             case EXPIRED:
-                queue = queueService.createNewQueue(userId);
+                Queue newQueue = queueService.createNewQueue(userId);
                 Token newToken = tokenService.createToken(userId);
-                return new TokenDTO(newToken.getToken(), "ACTIVE", queue.getQueuePosition(), queue.getRemainingTimeInSeconds());
+                return new TokenDTO(newToken.getToken(), "ACTIVE", newQueue.getQueuePosition(), newQueue.getRemainingTimeInSeconds());
             default:
                 throw new IllegalStateException("Unexpected queue status");
         }
@@ -108,11 +96,8 @@ public class ConcertFacadeImpl implements ConcertFacade {
             request.getUserId()
         );
 
-        // 만료 시간을 5분 후로 설정
         LocalDateTime expiresAt = reservation.getReservedAt().plusMinutes(5);
-
         return new ReservationResponse(reservation.getId(), expiresAt);
-        // return new ReservationResponse(reservation.getId(), reservation.getReservedAt());
     }
 
     @Override
@@ -133,6 +118,30 @@ public class ConcertFacadeImpl implements ConcertFacade {
         if (!tokenService.isTokenValid(token)) {
             throw new TokenNotFoundException();
         }
-        return paymentService.processPayment(reservationId, amount, token);
-    }    
+
+        Reservation reservation = reservationService.getReservation(reservationId);
+        if (reservation == null) {
+            throw new ReservationNotFoundException();
+        }
+
+        User user = userService.getUser(reservation.getUserId());
+        if (user == null) {
+            throw new UserNotFoundException();
+        }
+
+        if (user.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException();
+        }
+
+        // 잔액 차감
+        BalanceResponse balanceResponse = userService.deductBalance(user.getId(), amount);
+
+        // 결제 처리
+        PaymentDTO paymentDTO = paymentService.processPayment(user.getId(), reservationId, amount);
+
+        // 예약 상태 업데이트
+        reservationService.updateReservationStatus(reservationId, "COMPLETED");
+
+        return paymentDTO;
+    }
 }

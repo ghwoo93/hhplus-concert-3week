@@ -21,17 +21,16 @@ import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.exception.InsufficientBalanceException;
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertService;
-import io.hhplus.concert.reservation.application.service.interfaces.PaymentService;
-import io.hhplus.concert.reservation.application.service.interfaces.QueueService;
-import io.hhplus.concert.reservation.application.service.interfaces.ReservationService;
-import io.hhplus.concert.reservation.application.service.interfaces.TokenService;
-import io.hhplus.concert.reservation.application.service.interfaces.UserService;
+import io.hhplus.concert.reservation.application.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.domain.model.Queue;
 import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.domain.service.ConcertService;
+import io.hhplus.concert.reservation.domain.service.PaymentService;
+import io.hhplus.concert.reservation.domain.service.QueueService;
+import io.hhplus.concert.reservation.domain.service.ReservationService;
+import io.hhplus.concert.reservation.domain.service.TokenService;
+import io.hhplus.concert.reservation.domain.service.UserService;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
@@ -60,7 +59,7 @@ public class ConcertFacadeTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        concertFacade = new ConcertFacadeImpl(queueService, tokenService, concertService, 
+        concertFacade = new ConcertFacad    eImpl(queueService, tokenService, concertService, 
                                             reservationService, paymentService, userService);
     }
 

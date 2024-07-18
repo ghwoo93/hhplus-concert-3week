@@ -30,7 +30,7 @@ import io.hhplus.concert.reservation.application.exception.ConcertNotFoundExcept
 import io.hhplus.concert.reservation.application.exception.InsufficientBalanceException;
 import io.hhplus.concert.reservation.application.exception.SeatAlreadyReservedException;
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
+import io.hhplus.concert.reservation.application.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.config.TestSecurityConfig;
 import io.hhplus.concert.reservation.presentation.controller.ReservationController;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;

@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.hhplus.concert.reservation.application.dto.PaymentDTO;
-import io.hhplus.concert.reservation.application.service.facade.ConcertFacadeImpl;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
+import io.hhplus.concert.reservation.application.facade.ConcertFacade;
+
 import io.hhplus.concert.reservation.presentation.request.BalanceRequest;
 import io.hhplus.concert.reservation.presentation.request.PaymentRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
