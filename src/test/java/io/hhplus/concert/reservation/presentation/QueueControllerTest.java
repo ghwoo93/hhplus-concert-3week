@@ -48,7 +48,7 @@ public class QueueControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private QueueDTO queueDTO;    
+    private QueueDTO queueDTO;
 
     @BeforeEach
     public void setUp() {
@@ -72,7 +72,7 @@ public class QueueControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
                 .andExpect(status().isCreated());
-    }    
+    }
 
     @Test
     public void testCreateQueue_UserNotFound() throws Exception {
@@ -112,7 +112,7 @@ public class QueueControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
                 .andExpect(status().isInternalServerError());
-    }    
+    }
 
     @Test
     @WithMockUser

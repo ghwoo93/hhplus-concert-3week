@@ -188,5 +188,5 @@ public class ReservationControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden())
                 .andDo(print());
-    }    
+    }
 }
