@@ -1,6 +1,7 @@
 package io.hhplus.concert.reservation.infrastructure.mapper;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,12 +11,13 @@ import io.hhplus.concert.reservation.presentation.response.ConcertDateResponse;
 import io.hhplus.concert.reservation.presentation.response.SeatResponse;
 
 public class ResponseMapper {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public static ConcertDateResponse toConcertDateResponse(ConcertDTO dto) {
         ConcertDateResponse response = new ConcertDateResponse();
         response.setConcertId(dto.getConcertId());
         response.setConcertName(dto.getConcertName());
-        response.setDate(LocalDate.parse(dto.getDate()));  // String to LocalDate
+        response.setDate(LocalDate.parse(dto.getDate())); // LocalDate로 파싱만 수행
         return response;
     }
 
@@ -37,5 +39,6 @@ public class ResponseMapper {
                    .map(ResponseMapper::toSeatResponse)
                    .collect(Collectors.toList());
     }
+
 }
 

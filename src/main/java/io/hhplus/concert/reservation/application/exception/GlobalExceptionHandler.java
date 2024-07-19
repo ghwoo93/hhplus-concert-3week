@@ -23,8 +23,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(TokenNotFoundException.class)
-    public ResponseEntity<String> handleTokenNotFoundException(TokenNotFoundException ex) {
+    @ExceptionHandler(TokenInvalidStatusException.class)
+    public ResponseEntity<String> handleTokenNotFoundException(TokenInvalidStatusException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
@@ -61,5 +61,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConcertNotFoundException.class)
     public ResponseEntity<String> handleConcertNotFoundException(ConcertNotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<String> handleNullPointerException(NullPointerException ex) {
+        return new ResponseEntity<>("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
