@@ -20,7 +20,7 @@ public class SeatReservationScheduler {
         this.seatRepository = seatRepository;
     }
 
-    @Scheduled(fixedRate = 60000) // 1분마다 실행
+    @Scheduled(fixedRate = 60000)
     @Transactional
     public void releaseExpiredReservations() {
         LocalDateTime now = LocalDateTime.now();

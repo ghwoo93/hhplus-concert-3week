@@ -26,7 +26,6 @@ public class TokenStatusSchedulerTest {
     @Mock
     private TokenRepository tokenRepository;
 
-    @InjectMocks
     private TokenStatusScheduler tokenStatusScheduler;
 
     @Captor
@@ -35,6 +34,7 @@ public class TokenStatusSchedulerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        tokenStatusScheduler = new TokenStatusScheduler(tokenRepository);
     }
 
     @Test
@@ -53,9 +53,10 @@ public class TokenStatusSchedulerTest {
         token3.setCreatedAt(LocalDateTime.now().minusMinutes(1));
 
         List<TokenEntity> waitingTokens = Arrays.asList(token1, token2, token3);
-        when(tokenRepository.findByStatusOrderByCreatedAt(any(TokenStatus.class))).thenReturn(waitingTokens);
 
         // When
+        when(tokenRepository.findByStatusOrderByCreatedAt(any(TokenStatus.class))).thenReturn(waitingTokens);
+
         tokenStatusScheduler.updateTokenPositions();
 
         // Then
