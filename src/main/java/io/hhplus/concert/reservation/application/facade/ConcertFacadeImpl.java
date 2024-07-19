@@ -2,8 +2,10 @@ package io.hhplus.concert.reservation.application.facade;
 
 import io.hhplus.concert.reservation.application.dto.*;
 import io.hhplus.concert.reservation.application.exception.*;
+import io.hhplus.concert.reservation.domain.enums.TokenStatus;
 import io.hhplus.concert.reservation.domain.model.*;
 import io.hhplus.concert.reservation.domain.service.*;
+import io.hhplus.concert.reservation.infrastructure.mapper.TokenMapper;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
@@ -12,23 +14,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class ConcertFacadeImpl implements ConcertFacade {
 
-    private final QueueService queueService;
     private final TokenService tokenService;
     private final ConcertService concertService;
     private final ReservationService reservationService;
     private final PaymentService paymentService;
     private final UserService userService;
 
-    public ConcertFacadeImpl(QueueService queueService, TokenService tokenService,
-                             ConcertService concertService, ReservationService reservationService,
-                             PaymentService paymentService, UserService userService) {
-        this.queueService = queueService;
+    public ConcertFacadeImpl(TokenService tokenService,
+                             ConcertService concertService,
+                             ReservationService reservationService,
+                             PaymentService paymentService,
+                             UserService userService) {
         this.tokenService = tokenService;
         this.concertService = concertService;
         this.reservationService = reservationService;
@@ -39,39 +40,27 @@ public class ConcertFacadeImpl implements ConcertFacade {
     @Override
     @Transactional
     public TokenDTO issueToken(String userId) {
-        Queue queue = queueService.getOrCreateQueueForUser(userId);
-        return handleQueueStatus(queue, userId);
-    }
-
-    private TokenDTO handleQueueStatus(Queue queue, String userId) {
-        switch (queue.getStatus()) {
-            case ACTIVE:
-                Token token = tokenService.createToken(userId);
-                return new TokenDTO(token.getToken(), "ACTIVE", queue.getQueuePosition(), queue.getRemainingTimeInSeconds());
-            case WAITING:
-                return new TokenDTO(null, "WAITING", queue.getQueuePosition(), queue.getRemainingTimeInSeconds());
-            case EXPIRED:
-                Queue newQueue = queueService.createNewQueue(userId);
-                Token newToken = tokenService.createToken(userId);
-                return new TokenDTO(newToken.getToken(), "ACTIVE", newQueue.getQueuePosition(), newQueue.getRemainingTimeInSeconds());
-            default:
-                throw new IllegalStateException("Unexpected queue status");
-        }
+        Token token = tokenService.getOrCreateTokenForUser(userId);
+        return TokenMapper.toDto(token);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public QueueDTO checkQueueStatus(String token) {
-        Queue queue = queueService.getQueueStatus(token);
-        return new QueueDTO(queue.getQueuePosition(), queue.getStatus().name(), queue.getRemainingTimeInSeconds());
+    public TokenDTO checkTokenStatus(String userId) {
+        Token token = tokenService.getTokenStatus(userId);
+        if (token.isExpired()) {
+            tokenService.expireToken(token);
+            throw new TokenExpiredException();
+        }
+        return TokenMapper.toDto(token);
     }
 
     @Override
-    @Transactional
-    public QueueDTO createQueue(String userId) {
-        Queue queue = queueService.createNewQueue(userId);
-        return new QueueDTO(queue.getQueuePosition(), queue.getStatus().name(), queue.getRemainingTimeInSeconds());
+    @Transactional(readOnly = true)
+    public boolean isTokenValid(String userId) {
+        return tokenService.isTokenValid(userId);
     }
+
 
     @Override
     public List<ConcertDTO> getAllConcerts() {
@@ -86,8 +75,9 @@ public class ConcertFacadeImpl implements ConcertFacade {
     @Override
     @Transactional
     public ReservationResponse reserveSeat(SeatReservationRequest request) {
-        if (!tokenService.isTokenValid(request.getToken())) {
-            throw new TokenNotFoundException();
+        Token token = tokenService.getTokenStatus(request.getUserId());
+        if (token.getStatus() != TokenStatus.ACTIVE) {
+            throw new TokenInvalidStatusException();
         }
 
         Reservation reservation = reservationService.reserveSeat(
@@ -96,8 +86,7 @@ public class ConcertFacadeImpl implements ConcertFacade {
             request.getUserId()
         );
 
-        LocalDateTime expiresAt = reservation.getReservedAt().plusMinutes(5);
-        return new ReservationResponse(reservation.getId(), expiresAt);
+        return new ReservationResponse(reservation.getId(), reservation.getReservedAt().plusMinutes(5));
     }
 
     @Override
@@ -116,7 +105,7 @@ public class ConcertFacadeImpl implements ConcertFacade {
     @Transactional
     public PaymentDTO processPayment(String reservationId, BigDecimal amount, String token) {
         if (!tokenService.isTokenValid(token)) {
-            throw new TokenNotFoundException();
+            throw new TokenInvalidStatusException();
         }
 
         Reservation reservation = reservationService.getReservation(reservationId);

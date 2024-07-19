@@ -23,8 +23,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(TokenNotFoundException.class)
-    public ResponseEntity<String> handleTokenNotFoundException(TokenNotFoundException ex) {
+    @ExceptionHandler(TokenInvalidStatusException.class)
+    public ResponseEntity<String> handleTokenNotFoundException(TokenInvalidStatusException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
