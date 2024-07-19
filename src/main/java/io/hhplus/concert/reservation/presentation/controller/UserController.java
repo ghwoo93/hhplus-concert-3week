@@ -39,18 +39,6 @@ public class UserController {
         }
     }
 
-//     @PutMapping("/{userId}/points")
-//     public ResponseEntity<BalanceResponse> rechargeBalance(@PathVariable String userId, @RequestBody BalanceRequest balanceRequest) {
-//         BigDecimal amount = BigDecimal.valueOf(balanceRequest.getAmount());
-//         BalanceResponse balanceResponse = concertFacade.rechargeBalance(userId, amount);
-//         return ResponseEntity.ok(balanceResponse);
-//     }
-
-//     @GetMapping("/{userId}/points")
-//     public ResponseEntity<BalanceResponse> getBalance(@PathVariable String userId) {
-//         BalanceResponse balanceResponse = concertFacade.getBalance(userId);
-//         return ResponseEntity.ok(balanceResponse);
-//     }
 }
 
 

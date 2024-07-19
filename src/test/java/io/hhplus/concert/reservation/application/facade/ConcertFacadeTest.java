@@ -19,25 +19,21 @@ import io.hhplus.concert.reservation.application.dto.PaymentDTO;
 import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.exception.InsufficientBalanceException;
-import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
-import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
-import io.hhplus.concert.reservation.domain.model.Queue;
+import io.hhplus.concert.reservation.application.exception.TokenInvalidStatusException;
 import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.domain.model.User;
 import io.hhplus.concert.reservation.domain.service.ConcertService;
 import io.hhplus.concert.reservation.domain.service.PaymentService;
-import io.hhplus.concert.reservation.domain.service.QueueService;
 import io.hhplus.concert.reservation.domain.service.ReservationService;
 import io.hhplus.concert.reservation.domain.service.TokenService;
 import io.hhplus.concert.reservation.domain.service.UserService;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
+import io.hhplus.concert.reservation.domain.enums.TokenStatus;
 
 public class ConcertFacadeTest {
-    @Mock
-    private QueueService queueService;
-
     @Mock
     private TokenService tokenService;
 
@@ -58,90 +54,29 @@ public class ConcertFacadeTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        concertFacade = new ConcertFacadeImpl(queueService, tokenService, concertService, 
+        concertFacade = new ConcertFacadeImpl(tokenService, concertService, 
                                             reservationService, paymentService, userService);
     }
 
     @Test
-    void issueToken_WhenUserNotInQueue_ShouldCreateNewQueueAndIssueToken() {
+    void issueToken_WhenUserNotInQueue_ShouldCreateNewTokenAndIssueToken() {
         String userId = "user1";
-        Queue newQueue = new Queue(userId);  // 생성자를 사용하여 Queue 객체 생성
-        newQueue.setStatus(Queue.QueueStatus.ACTIVE);
-        newQueue.updateQueuePosition(1);
-        newQueue.setExpirationTime(3600); // 1시간 후 만료
-    
-        Token newToken = new Token();
-        newToken.setToken("newToken");
-    
-        when(queueService.getOrCreateQueueForUser(userId)).thenReturn(newQueue);
-        when(tokenService.createToken(userId)).thenReturn(newToken);
-    
+        Token newToken = new Token(userId);
+        newToken.setStatus(TokenStatus.ACTIVE);
+        newToken.updateQueuePosition(1);
+        newToken.setExpiresAt(LocalDateTime.now().plusHours(1));
+
+        when(tokenService.getOrCreateTokenForUser(userId)).thenReturn(newToken);
+
         TokenDTO result = concertFacade.issueToken(userId);
-    
+
         assertNotNull(result);
-        assertEquals("newToken", result.getToken());
         assertEquals("ACTIVE", result.getStatus());
         assertEquals(1, result.getQueuePosition());
         assertTrue(result.getRemainingTime() <= 3600 && result.getRemainingTime() > 3590,
                 "Remaining time should be between 3590 and 3600 seconds, but was: " + result.getRemainingTime());
-    
-        verify(queueService).getOrCreateQueueForUser(userId);
-        verify(tokenService).createToken(userId);
-    }
-    
-    @Test
-    void issueToken_WhenUserQueueExpired_ShouldCreateNewQueueAndIssueToken() {
-        String userId = "user3";
-        Queue expiredQueue = new Queue(userId);
-        expiredQueue.setStatus(Queue.QueueStatus.EXPIRED);
-    
-        Queue newQueue = new Queue(userId);
-        newQueue.setStatus(Queue.QueueStatus.ACTIVE);
-        newQueue.updateQueuePosition(1);
-        newQueue.setExpirationTime(3600); // 1시간 후 만료
-    
-        Token newToken = new Token();
-        newToken.setToken("newToken");
-    
-        when(queueService.getOrCreateQueueForUser(userId)).thenReturn(expiredQueue);
-        when(queueService.createNewQueue(userId)).thenReturn(newQueue);
-        when(tokenService.createToken(userId)).thenReturn(newToken);
-    
-        TokenDTO result = concertFacade.issueToken(userId);
-    
-        assertNotNull(result);
-        assertEquals("newToken", result.getToken());
-        assertEquals("ACTIVE", result.getStatus());
-        assertEquals(1, result.getQueuePosition());
-        assertTrue(result.getRemainingTime() <= 3600 && result.getRemainingTime() > 3550,
-                "Remaining time should be between 3550 and 3600 seconds, but was: " + result.getRemainingTime());
-    
-        verify(queueService).getOrCreateQueueForUser(userId);
-        verify(queueService).createNewQueue(userId);
-        verify(tokenService).createToken(userId);
-    }
-    
-    @Test
-    void issueToken_WhenUserInWaitingQueue_ShouldReturnWaitingStatus() {
-        String userId = "user2";
-        Queue waitingQueue = new Queue(userId);
-        waitingQueue.setStatus(Queue.QueueStatus.WAITING);
-        waitingQueue.updateQueuePosition(10);
-        waitingQueue.setLastUpdatedAt(LocalDateTime.now().minusSeconds(1)); // Ensure that the last updated time is set correctly
-    
-        when(queueService.getOrCreateQueueForUser(userId)).thenReturn(waitingQueue);
-    
-        TokenDTO result = concertFacade.issueToken(userId);
-    
-        assertNotNull(result);
-        assertNull(result.getToken());
-        assertEquals("WAITING", result.getStatus());
-        assertEquals(10, result.getQueuePosition());
-        assertTrue(result.getRemainingTime() <= 10 && result.getRemainingTime() > 0,
-                "Remaining time should be between 0 and 10 seconds, but was: " + result.getRemainingTime());
-    
-        verify(queueService).getOrCreateQueueForUser(userId);
-        verifyNoInteractions(tokenService);
+
+        verify(tokenService).getOrCreateTokenForUser(userId);
     }
 
     @Test
@@ -183,128 +118,116 @@ public class ConcertFacadeTest {
 
     @Test
     void reserveSeat_ShouldReturnReservationResponse() {
-        // Arrange
         SeatReservationRequest request = new SeatReservationRequest();
         request.setToken("validToken");
         request.setConcertId("concert1");
         request.setSeatNumber(1);
         request.setUserId("user1");
-
+    
         LocalDateTime now = LocalDateTime.now();
-
-        when(tokenService.isTokenValid(anyString())).thenReturn(true);
+        Token validToken = new Token("user1");
+        validToken.setStatus(TokenStatus.ACTIVE);
+    
+        when(tokenService.getTokenStatus("user1")).thenReturn(validToken);
         when(reservationService.reserveSeat(anyString(), anyInt(), anyString()))
             .thenReturn(new Reservation("reservation1", "user1", "concert1", 1, "TEMPORARY", now));
-
-        // Act
+    
         ReservationResponse result = concertFacade.reserveSeat(request);
-
-        // Assert
+    
         assertNotNull(result);
         assertEquals("reservation1", result.getReservationId());
-    
-        // 수정된 부분: 날짜 비교 로직 개선
         assertTrue(result.getExpiresAt().isAfter(now), "Expiration time should be in the future");
         assertTrue(result.getExpiresAt().isBefore(now.plusMinutes(6)), "Expiration time should be within 6 minutes");
-
-        verify(tokenService).isTokenValid("validToken");
+    
+        verify(tokenService).getTokenStatus("user1");
         verify(reservationService).reserveSeat("concert1", 1, "user1");
     }
 
     @Test
-    void reserveSeat_WithInvalidToken_ShouldThrowTokenNotFoundException() {
-        // Arrange
+    void reserveSeat_WithInvalidToken_ShouldThrowTokenInvalidStatusException() {
         SeatReservationRequest request = new SeatReservationRequest();
         request.setToken("invalidToken");
-
-        when(tokenService.isTokenValid(anyString())).thenReturn(false);
-
-        // Act & Assert
-        assertThrows(TokenNotFoundException.class, () -> concertFacade.reserveSeat(request));
-        verify(tokenService).isTokenValid("invalidToken");
+        request.setUserId("user1");
+    
+        Token invalidToken = new Token("user1");
+        invalidToken.setStatus(TokenStatus.EXPIRED);
+    
+        when(tokenService.getTokenStatus("user1")).thenReturn(invalidToken);
+    
+        assertThrows(TokenInvalidStatusException.class, () -> concertFacade.reserveSeat(request));
+        verify(tokenService).getTokenStatus("user1");
         verifyNoInteractions(reservationService);
     }
 
     @Test
     void rechargeBalance_Success() {
         String userId = "user1";
-        int amount = 1000;
+        BigDecimal amount = BigDecimal.valueOf(1000);
         BalanceResponse expectedResponse = new BalanceResponse(1000, 1000);
-        when(userService.rechargeBalance(userId, BigDecimal.valueOf(amount))).thenReturn(expectedResponse);
+        when(userService.rechargeBalance(userId, amount)).thenReturn(expectedResponse);
 
-        BalanceResponse result = concertFacade.rechargeBalance(userId, BigDecimal.valueOf(amount));
+        BalanceResponse result = concertFacade.rechargeBalance(userId, amount);
 
         assertEquals(expectedResponse, result);
-        verify(userService).rechargeBalance(userId, BigDecimal.valueOf(amount));
-    }
-
-    @Test
-    void rechargeBalance_UserNotFound() {
-        String userId = "nonexistent";
-        int amount = 1000;
-        when(userService.rechargeBalance(userId, BigDecimal.valueOf(amount))).thenThrow(new UserNotFoundException());
-
-        assertThrows(UserNotFoundException.class, () -> concertFacade.rechargeBalance(userId, BigDecimal.valueOf(amount)));
-    }
-
-    @Test
-    void getBalance_Success() {
-        String userId = "user1";
-        BalanceResponse expectedResponse = new BalanceResponse(1000, 1000);
-        when(userService.getBalance(userId)).thenReturn(expectedResponse);
-
-        BalanceResponse result = concertFacade.getBalance(userId);
-
-        assertEquals(expectedResponse, result);
-        verify(userService).getBalance(userId);
-    }
-
-    @Test
-    void getBalance_UserNotFound() {
-        String userId = "nonexistent";
-        when(userService.getBalance(userId)).thenThrow(new UserNotFoundException());
-
-        assertThrows(UserNotFoundException.class, () -> concertFacade.getBalance(userId));
+        verify(userService).rechargeBalance(userId, amount);
     }
 
     @Test
     void processPayment_Success() {
         String reservationId = "res1";
         BigDecimal amount = BigDecimal.valueOf(1000);
-        String token = "validToken";
+        String userId = "user1";
         PaymentDTO expectedPaymentDTO = new PaymentDTO("payment1", "COMPLETED");
-
-        when(tokenService.isTokenValid(token)).thenReturn(true);
-        when(paymentService.processPayment(reservationId, token, amount)).thenReturn(expectedPaymentDTO);
-
-        PaymentDTO result = concertFacade.processPayment(reservationId, amount, token);
-
+    
+        Reservation reservation = new Reservation(reservationId, userId, "concert1", 1, "TEMPORARY", LocalDateTime.now());
+        User user = new User(userId, "username", "password", BigDecimal.valueOf(2000), LocalDateTime.now());
+    
+        when(tokenService.isTokenValid(userId)).thenReturn(true);
+        when(reservationService.getReservation(reservationId)).thenReturn(reservation);
+        when(userService.getUser(userId)).thenReturn(user);
+        when(paymentService.processPayment(anyString(), anyString(), any(BigDecimal.class))).thenReturn(expectedPaymentDTO);
+    
+        PaymentDTO result = concertFacade.processPayment(reservationId, amount, userId);
+    
         assertEquals(expectedPaymentDTO, result);
-        verify(tokenService).isTokenValid(token);
-        verify(paymentService).processPayment(reservationId, token, amount);
+        verify(tokenService).isTokenValid(userId);
+        verify(reservationService).getReservation(reservationId);
+        verify(userService).getUser(userId);
+        verify(paymentService).processPayment(userId, reservationId, amount);
     }
 
     @Test
     void processPayment_InvalidToken() {
         String reservationId = "res1";
-        int amount = 1000;
+        BigDecimal amount = BigDecimal.valueOf(1000);
         String token = "invalidToken";
 
         when(tokenService.isTokenValid(token)).thenReturn(false);
 
-        assertThrows(TokenNotFoundException.class, () -> concertFacade.processPayment(reservationId, BigDecimal.valueOf(amount), token));
+        assertThrows(TokenInvalidStatusException.class, () -> concertFacade.processPayment(reservationId, amount, token));
     }
 
     @Test
     void processPayment_InsufficientBalance() {
         String reservationId = "res1";
         BigDecimal amount = BigDecimal.valueOf(1000);
-        String token = "validToken";
-
-        when(tokenService.isTokenValid(token)).thenReturn(true);
-        when(paymentService.processPayment(reservationId, token, amount))
+        String userId = "user1";
+    
+        Reservation reservation = new Reservation(reservationId, userId, "concert1", 1, "TEMPORARY", LocalDateTime.now());
+        User user = new User(userId, "username", "password", BigDecimal.valueOf(500), LocalDateTime.now());
+    
+        when(tokenService.isTokenValid(userId)).thenReturn(true);
+        when(reservationService.getReservation(reservationId)).thenReturn(reservation);
+        when(userService.getUser(userId)).thenReturn(user);
+        when(userService.deductBalance(eq(userId), any(BigDecimal.class)))
             .thenThrow(new InsufficientBalanceException());
-
-        assertThrows(InsufficientBalanceException.class, () -> concertFacade.processPayment(reservationId, amount, token));
+    
+        assertThrows(InsufficientBalanceException.class, () -> concertFacade.processPayment(reservationId, amount, userId));
+        
+        verify(tokenService).isTokenValid(userId);
+        verify(reservationService).getReservation(reservationId);
+        verify(userService).getUser(userId);
+        verify(userService).deductBalance(eq(userId), any(BigDecimal.class));
+        verifyNoInteractions(paymentService);
     }
 }

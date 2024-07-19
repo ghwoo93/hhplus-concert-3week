@@ -29,7 +29,7 @@ import io.hhplus.concert.reservation.application.dto.SeatDTO;
 import io.hhplus.concert.reservation.application.exception.ConcertNotFoundException;
 import io.hhplus.concert.reservation.application.exception.InsufficientBalanceException;
 import io.hhplus.concert.reservation.application.exception.SeatAlreadyReservedException;
-import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
+import io.hhplus.concert.reservation.application.exception.TokenInvalidStatusException;
 import io.hhplus.concert.reservation.application.facade.ConcertFacadeImpl;
 import io.hhplus.concert.reservation.config.TestSecurityConfig;
 import io.hhplus.concert.reservation.presentation.controller.ReservationController;
@@ -124,7 +124,7 @@ public class ReservationControllerTest {
         request.setSeatNumber(1);
         request.setUserId("user1");
 
-        when(concertFacade.reserveSeat(any(SeatReservationRequest.class))).thenThrow(new TokenNotFoundException());
+        when(concertFacade.reserveSeat(any(SeatReservationRequest.class))).thenThrow(new TokenInvalidStatusException());
 
         mockMvc.perform(post("/api/v1/reservations")
                 .contentType(MediaType.APPLICATION_JSON)

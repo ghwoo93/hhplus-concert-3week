@@ -2,45 +2,43 @@ package io.hhplus.concert.reservation.infrastructure.entity;
 
 import java.time.LocalDateTime;
 
-import io.hhplus.concert.reservation.domain.model.Queue;
-import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.domain.enums.TokenStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "tokens")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
 public class TokenEntity {
     @Id
-    private String token;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(nullable = false)
     private String userId;
+
+    @Column(nullable = false)
+    private int queuePosition;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TokenStatus status;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    public TokenEntity(Token token) {
-        this.token = token.getToken();
-        this.userId = token.getUserId();
-        this.createdAt = token.getCreatedAt();
-        this.expiresAt = token.getExpiresAt();
-    }
-
-    public Token toToken() {
-        return new Token(token, userId, createdAt, expiresAt);
-    }
-
-    // toQueue 메서드 제거 또는 수정
-    public Queue toQueue() {
-        Queue queue = new Queue();
-        queue.setUserId(this.userId);
-        queue.setToken(this.token);
-        queue.setCreatedAt(this.createdAt);
-        queue.setExpiresAt(this.expiresAt);
-        return queue;
-    }
+    @Column(nullable = false)
+    private LocalDateTime lastUpdatedAt;
 }
