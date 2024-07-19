@@ -7,9 +7,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "reservations")
+@Data
 public class ReservationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,4 +21,5 @@ public class ReservationEntity {
     private int seatNumber;
     private String reservationStatus;
     private LocalDateTime reservedAt;
+    private LocalDateTime performanceDate;
 }

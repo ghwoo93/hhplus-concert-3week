@@ -27,7 +27,7 @@ import io.hhplus.concert.reservation.application.exception.TokenExpiredException
 import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.exception.UserAlreadyInQueueException;
 import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
+import io.hhplus.concert.reservation.application.facade.ConcertFacade;
 import io.hhplus.concert.reservation.config.TestSecurityConfig;
 import io.hhplus.concert.reservation.presentation.controller.QueueController;
 import io.hhplus.concert.reservation.presentation.request.QueueRequest;
@@ -48,7 +48,7 @@ public class QueueControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private QueueDTO queueDTO;    
+    private QueueDTO queueDTO;
 
     @BeforeEach
     public void setUp() {
@@ -72,7 +72,7 @@ public class QueueControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
                 .andExpect(status().isCreated());
-    }    
+    }
 
     @Test
     public void testCreateQueue_UserNotFound() throws Exception {
@@ -112,7 +112,7 @@ public class QueueControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
                 .andExpect(status().isInternalServerError());
-    }    
+    }
 
     @Test
     @WithMockUser

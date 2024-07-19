@@ -57,4 +57,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleGenericException(Exception ex) {
         return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(ConcertNotFoundException.class)
+    public ResponseEntity<String> handleConcertNotFoundException(ConcertNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
 }

@@ -12,9 +12,11 @@ public class TestSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-            .authorizeRequests()
-            .anyRequest().permitAll();
+        http
+            .authorizeHttpRequests(authz -> authz
+                .anyRequest().permitAll()
+            )
+            .csrf(csrf -> csrf.disable());
         return http.build();
     }
 }

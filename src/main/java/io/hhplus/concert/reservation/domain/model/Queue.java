@@ -3,6 +3,7 @@ package io.hhplus.concert.reservation.domain.model;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +16,7 @@ public class Queue {
     private Long id;
     private String userId;
     private String token;
-    private int queuePosition;
+    private AtomicInteger queuePosition;
     private QueueStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
@@ -30,13 +31,18 @@ public class Queue {
         this.token = generateToken();
     }
 
+    public void updateQueuePosition(int newPosition) {
+        this.queuePosition.set(newPosition);
+        this.lastUpdatedAt = LocalDateTime.now();
+    }
+
     public long getRemainingTimeInSeconds() {
         LocalDateTime now = LocalDateTime.now();
-        
+    
         if (lastUpdatedAt == null) {
             lastUpdatedAt = now;
         }
-        
+    
         switch (status) {
             case WAITING:
                 LocalDateTime nextUpdate = this.lastUpdatedAt.plusSeconds(10);
@@ -49,6 +55,11 @@ public class Queue {
         }
     }
 
+    public void expire() {
+        this.status = QueueStatus.EXPIRED;
+        this.lastUpdatedAt = LocalDateTime.now();
+    }
+
     public void setExpirationTime(long secondsFromNow) {
         this.expiresAt = LocalDateTime.now().plusSeconds(secondsFromNow);
         this.lastUpdatedAt = LocalDateTime.now();
@@ -59,7 +70,7 @@ public class Queue {
     }
 
     public int getQueuePosition() {
-        return queuePosition;
+        return this.queuePosition.get();
     }
 
     private String generateToken() {

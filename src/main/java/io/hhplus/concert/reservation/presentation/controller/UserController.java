@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
 import io.hhplus.concert.reservation.application.exception.UserAlreadyInQueueException;
 import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
-import io.hhplus.concert.reservation.application.service.interfaces.ConcertFacade;
+import io.hhplus.concert.reservation.application.facade.ConcertFacade;
 import io.hhplus.concert.reservation.presentation.request.UserTokenRequest;
 import io.hhplus.concert.reservation.presentation.response.TokenResponse;
 
