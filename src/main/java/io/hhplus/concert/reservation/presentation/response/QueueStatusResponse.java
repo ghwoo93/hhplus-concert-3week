@@ -1,10 +1,11 @@
 package io.hhplus.concert.reservation.presentation.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-public class UserTokenResponse {
-    private String token;
+@AllArgsConstructor
+public class QueueStatusResponse {
     private int queuePosition;
-    private int remainingTime;
+    private long remainingTime;
 }

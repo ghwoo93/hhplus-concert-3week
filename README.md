@@ -65,6 +65,11 @@
     }
     ```
     
+- **Error Codes** :
+    - `400 Bad Request`: Invalid request payload.
+    - `404 Not Found`: User not found.
+    - `409 Conflict`: User already in the queue.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 
 ### 4.2 예약 가능 날짜 / 좌석 API
 
@@ -88,6 +93,8 @@
     ]
     ```
     
+- **Error Codes**:
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 - **Endpoint**: `/api/v1/concerts/{concertId}/seats`
 - **Method**: GET
 - **Response**:
@@ -106,6 +113,10 @@
     ]
     ```
     
+- **Error Codes**:
+    - `400 Bad Request`: Invalid concert ID.
+    - `404 Not Found`: Concert not found.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 
 ### 4.3 좌석 예약 요청 API
 
@@ -130,6 +141,13 @@
     }
     ```
     
+- **Error Codes**:
+    - `400 Bad Request`: Invalid request payload.
+    - `401 Unauthorized`: User not authenticated.
+    - `403 Forbidden`: User not allowed to make a reservation.
+    - `404 Not Found`: Concert or seat not found.
+    - `409 Conflict`: Seat already reserved.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 
 ### 4.4 잔액 충전 / 조회 API
 
@@ -139,7 +157,6 @@
     
     ```json
     {
-      "userId": "UUID",
       "amount": 100
     }
     ```
@@ -152,16 +169,12 @@
     }
     ```
     
-- **Endpoint**: `/api/v1/balances`
+- **Error Codes**:
+    - `400 Bad Request`: Invalid request payload.
+    - `404 Not Found`: User not found.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
+- **Endpoint**: `/api/v1/users/{userId}/points`
 - **Method**: GET
-- **Request**:
-    
-    ```json
-    {
-      "userId": "UUID"
-    }
-    ```
-    
 - **Response**:
     
     ```json
@@ -170,6 +183,9 @@
     }
     ```
     
+- **Error Codes**:
+    - `404 Not Found`: User not found.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 
 ### 4.5 결제 API
 
@@ -194,6 +210,13 @@
     }
     ```
     
+- **Error Codes**:
+    - `400 Bad Request`: Invalid request payload.
+    - `401 Unauthorized`: User not authenticated.
+    - `403 Forbidden`: User not allowed to make a payment.
+    - `404 Not Found`: Reservation not found.
+    - `409 Conflict`: Payment already processed or insufficient balance.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 
 ### 4.6 대기열 확인 API
 
@@ -215,6 +238,13 @@
       "remainingTime": "int"
     }
     ```
+    
+- **Error Codes**:
+    - `400 Bad Request`: Invalid request payload.
+    - `401 Unauthorized`: User not authenticated.
+    - `404 Not Found`: Token not found.
+    - `410 Gone`: Token expired.
+    - `500 Internal Server Error`: Server encountered an unexpected condition.
 
 ## Milestone
 ```mermaid
@@ -248,25 +278,31 @@ sequenceDiagram
     participant User
     participant API Gateway
     participant Auth Service
+    participant Queue Service
     participant DB
 
     User->>API Gateway: 토큰 발급 요청
     API Gateway->>Auth Service: Authorization 헤더 확인
-    Auth Service->>DB: Queue 테이블에서 userId 조회
+    Auth Service->>Queue Service: 유저 상태 확인
+    Queue Service->>DB: Queue 테이블에서 userId 조회
     alt userId가 없음
-        DB-->>Auth Service: 조회 실패
+        DB-->>Queue Service: 조회 실패
+        Queue Service-->>Auth Service: 토큰 발급 실패
         Auth Service-->>API Gateway: 토큰 발급 실패
         API Gateway-->>User: 토큰 발급 실패 메시지 전달
     else userId가 있음
         alt 상태가 ACTIVE
+            Queue Service-->>Auth Service: 토큰 발급 가능
             Auth Service-->>API Gateway: 토큰 발급
             API Gateway-->>User: 토큰 및 대기열 정보 전달
         else 상태가 WAITING
+            Queue Service-->>Auth Service: 대기 중
             Auth Service-->>API Gateway: 대기 중
             API Gateway-->>User: 대기 중 메시지 전달
         else 상태가 EXPIRED
-            Auth Service->>DB: 새 Queue 데이터 생성
-            DB-->>Auth Service: 생성 완료
+            Queue Service->>DB: 새 Queue 데이터 생성
+            DB-->>Queue Service: 생성 완료
+            Queue Service-->>Auth Service: 토큰 발급 가능
             Auth Service-->>API Gateway: 토큰 발급
             API Gateway-->>User: 토큰 및 대기열 정보 전달
         end
@@ -293,6 +329,7 @@ sequenceDiagram
     DB-->>Reservation Service: 조회 실패
     Reservation Service-->>API Gateway: 예약 가능 날짜 조회 실패
     API Gateway-->>User: 예약 가능 날짜 조회 실패 메시지 전달
+
 ```
 
 ### 예약 가능 콘서트 조회 Use Case
@@ -324,36 +361,22 @@ sequenceDiagram
     participant User
     participant API Gateway
     participant Reservation Service
+    participant Queue Service
     participant DB
 
     User->>API Gateway: 좌석 예약 요청
-    API Gateway->>Reservation Service: 좌석 예약 요청 처리
-    Reservation Service->>DB: 좌석 예약 상태 업데이트 및 임시 배정 정보 저장
-    DB-->>Reservation Service: 좌석 예약 정보 반환
-    Reservation Service-->>API Gateway: 좌석 예약 정보 반환
-    API Gateway-->>User: 좌석 예약 정보 전달
-
-    Note over Reservation Service,DB: 실패 시
-    DB-->>Reservation Service: 예약 실패
-    Reservation Service-->>API Gateway: 좌석 예약 실패
-    API Gateway-->>User: 좌석 예약 실패 메시지 전달
-```
-
-### 좌석 예약 요청 Use Case
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant API Gateway
-    participant Reservation Service
-    participant DB
-
-    User->>API Gateway: 좌석 예약 요청
-    API Gateway->>Reservation Service: 좌석 예약 요청 처리
-    Reservation Service->>DB: 좌석 예약 상태 업데이트 및 임시 배정 정보 저장
-    DB-->>Reservation Service: 좌석 예약 정보 반환
-    Reservation Service-->>API Gateway: 좌석 예약 정보 반환
-    API Gateway-->>User: 좌석 예약 정보 전달
+    API Gateway->>Queue Service: 유저 상태 확인
+    Queue Service->>DB: 유저 상태 조회
+    alt 상태가 WAITING
+        Queue Service-->>API Gateway: 대기 중
+        API Gateway-->>User: 대기 중 메시지 전달
+    else 상태가 ACTIVE
+        API Gateway->>Reservation Service: 좌석 예약 요청 처리
+        Reservation Service->>DB: 좌석 예약 상태 업데이트 및 임시 배정 정보 저장
+        DB-->>Reservation Service: 좌석 예약 정보 반환
+        Reservation Service-->>API Gateway: 좌석 예약 정보 반환
+        API Gateway-->>User: 좌석 예약 정보 전달
+    end
 
     Note over Reservation Service,DB: 실패 시
     DB-->>Reservation Service: 예약 실패
@@ -362,29 +385,6 @@ sequenceDiagram
 ```
 
 ### 잔액 충전 요청 Use Case
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant API Gateway
-    participant Payment Service
-    participant DB
-
-    User->>API Gateway: 잔액 충전 요청
-    API Gateway->>Payment Service: 잔액 충전 요청 처리
-    Payment Service->>DB: 유저 잔액 업데이트
-    DB-->>Payment Service: 업데이트 완료
-    Payment Service-->>API Gateway: 충전 결과 반환
-    API Gateway-->>User: 충전 결과 전달
-
-    Note over Payment Service,DB: 실패 시
-    DB-->>Payment Service: 충전 실패
-    Payment Service-->>API Gateway: 잔액 충전 실패
-    API Gateway-->>User: 잔액 충전 실패 메시지 전달
-
-```
-
-### 잔액 조회 요청 Use Case
 
 ```mermaid
 sequenceDiagram
@@ -404,7 +404,6 @@ sequenceDiagram
     DB-->>Payment Service: 조회 실패
     Payment Service-->>API Gateway: 잔액 조회 실패
     API Gateway-->>User: 잔액 조회 실패 메시지 전달
-
 ```
 
 ### 결제 요청 Use Case
@@ -414,20 +413,25 @@ sequenceDiagram
     participant User
     participant API Gateway
     participant Payment Service
+    participant Reservation Service
     participant DB
 
     User->>API Gateway: 결제 요청
     API Gateway->>Payment Service: 결제 요청 처리
-    Payment Service->>DB: 결제 내역 저장 및 좌석 소유권 업데이트
-    DB-->>Payment Service: 결제 및 업데이트 완료
-    Payment Service-->>API Gateway: 결제 결과 반환
-    API Gateway-->>User: 결제 결과 전달
-
-    Note over Payment Service,DB: 실패 시
-    DB-->>Payment Service: 결제 실패
-    Payment Service-->>API Gateway: 결제 실패
-    API Gateway-->>User: 결제 실패 메시지 전달
-
+    Payment Service->>Reservation Service: 예약 상태 확인
+    Reservation Service->>DB: 예약 상태 조회
+    alt 예약이 유효하지 않음
+        DB-->>Reservation Service: 예약 실패
+        Reservation Service-->>Payment Service: 예약 실패
+        Payment Service-->>API Gateway: 결제 실패
+        API Gateway-->>User: 결제 실패 메시지 전달
+    else 예약이 유효함
+        Reservation Service-->>Payment Service: 예약 유효
+        Payment Service->>DB: 결제 내역 저장 및 좌석 소유권 업데이트
+        DB-->>Payment Service: 결제 및 업데이트 완료
+        Payment Service-->>API Gateway: 결제 결과 반환
+        API Gateway-->>User: 결제 결과 전달
+    end
 ```
 
 ### 대기열 확인 요청 Use Case
@@ -436,16 +440,15 @@ sequenceDiagram
 sequenceDiagram
     participant User
     participant API Gateway
-    participant Auth Service
+    participant Queue Service
     participant DB
 
     User->>API Gateway: 대기열 확인 요청
-    API Gateway->>Auth Service: 대기열 정보 조회
-    Auth Service->>DB: 대기열 정보 조회
-    DB-->>Auth Service: 대기열 정보 반환
-    Auth Service-->>API Gateway: 대기열 정보 반환
+    API Gateway->>Queue Service: 대기열 정보 조회
+    Queue Service->>DB: 대기열 정보 조회
+    DB-->>Queue Service: 대기열 정보 반환
+    Queue Service-->>API Gateway: 대기열 정보 반환
     API Gateway-->>User: 대기열 정보 전달
-
 ```
 
 ## er Diagram
@@ -488,16 +491,18 @@ erDiagram
     RESERVATIONS {
         BIGINT id PK "AUTO_INCREMENT"
         STRING userId "NOT NULL"
-        STRING concertId UK "NOT NULL"
-        INT seatNumber UK "NOT NULL"
-        STRING reservationStatus UK "NOT NULL / 상태: ACTIVE, WAITING, EXPIRED"
+        STRING concertId "NOT NULL"
+        INT seatNumber "NOT NULL"
+        STRING concertName "NOT NULL"
+        DATE performanceDate "NOT NULL"
+        STRING reservationStatus "NOT NULL / 상태: ACTIVE, WAITING, EXPIRED"
         TIMESTAMP reservedAt "NOT NULL"
     }
 
-    PAYMENTS {
+    PAYMENT {
         BIGINT id PK "AUTO_INCREMENT"
         STRING userId "NOT NULL"
-        BIGINT reservationId "NOT NULL"
+        STRING reservationId "NOT NULL"
         DECIMAL amount "NOT NULL"
         STRING paymentStatus "NOT NULL"
         TIMESTAMP paidAt "NOT NULL"
@@ -512,7 +517,7 @@ erDiagram
 
     USERS ||--o{ QUEUE : "가짐"
     USERS ||--o{ RESERVATIONS : "생성"
-    USERS ||--o{ PAYMENTS : "생성"
+    USERS ||--o{ PAYMENT : "생성"
     USERS ||--o{ SEATS : "예약"
     USERS ||--o{ TOKENS : "발급"
 
@@ -523,6 +528,6 @@ erDiagram
     SEATS }o--|| CONCERTS : "속함"
     RESERVATIONS }o--|| USERS : "속함"
     RESERVATIONS }o--|| CONCERTS : "속함"
-    PAYMENTS }o--|| USERS : "속함"
-    PAYMENTS }o--|| RESERVATIONS : "관련"
+    PAYMENT }o--|| USERS : "속함"
+    PAYMENT }o--|| RESERVATIONS : "관련"
 ```
