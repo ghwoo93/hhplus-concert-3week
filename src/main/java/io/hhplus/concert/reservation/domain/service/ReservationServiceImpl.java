@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.hhplus.concert.reservation.application.exception.SeatAlreadyReservedException;
+import io.hhplus.concert.reservation.domain.enums.SeatStatus;
 import io.hhplus.concert.reservation.domain.model.Reservation;
 import io.hhplus.concert.reservation.infrastructure.entity.SeatEntity;
 import io.hhplus.concert.reservation.infrastructure.mapper.ReservationMapper;
@@ -31,27 +32,31 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional
     public Reservation reserveSeat(String concertId, int seatNumber, String userId) {
-        SeatEntity seatEntity = seatRepository.findByConcertIdAndSeatNumber(concertId, seatNumber)
-            .orElseThrow(() -> new RuntimeException("Seat not found"));
-    
-        if (seatEntity.isReserved()) {
+        LocalDateTime reservedUntil = LocalDateTime.now().plusMinutes(5);
+        int updatedRows = seatRepository.updateSeatStatus(
+            concertId,
+            seatNumber,
+            SeatStatus.AVAILABLE,
+            SeatStatus.RESERVED,
+            userId,
+            reservedUntil
+        );
+
+        if (updatedRows == 0) {
             throw new SeatAlreadyReservedException();
         }
-    
-        seatEntity.reserve(userId);
-        seatRepository.save(seatEntity);
-    
+
+        String reservationId = UUID.randomUUID().toString();
         Reservation reservation = new Reservation(
-            UUID.randomUUID().toString(),
+            reservationId,
             userId,
             concertId,
             seatNumber,
             "TEMPORARY",
             LocalDateTime.now()
         );
-    
+
         return ReservationMapper.toDomain(reservationRepository.save(ReservationMapper.toEntity(reservation)));
     }
 
