@@ -4,4 +4,8 @@ public class TokenInvalidStatusException extends RuntimeException {
     public TokenInvalidStatusException() {
         super("Token has invalid status.");
     }
+
+    public TokenInvalidStatusException(String message) {
+        super(message);
+    }
 }
