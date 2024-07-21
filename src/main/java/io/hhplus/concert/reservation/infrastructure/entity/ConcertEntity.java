@@ -2,6 +2,7 @@ package io.hhplus.concert.reservation.infrastructure.entity;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -17,6 +18,9 @@ import lombok.NoArgsConstructor;
 public class ConcertEntity {
     @Id
     private String id;
+
+    @Column(name = "concert_name")
     private String concertName;
+    
     private LocalDate date;
 }
