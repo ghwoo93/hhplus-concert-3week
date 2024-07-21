@@ -45,4 +45,12 @@ public class SeatEntity {
         @Enumerated(EnumType.STRING)
         private SeatStatus status;
     }
+
+    public String getConcertId() {
+        return id.getConcertId();
+    }
+
+    public Integer getSeatNumber() {
+        return id.getSeatNumber();
+    }
 }

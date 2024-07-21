@@ -1,6 +1,7 @@
 package io.hhplus.concert.reservation.domain.model;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,4 +17,5 @@ public class Reservation {
     private int seatNumber;
     private String reservationStatus;
     private LocalDateTime reservedAt;
+    private LocalDate performanceDate;
 }
