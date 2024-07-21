@@ -13,32 +13,33 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "tokens")
 @Getter
 @Setter
+@ToString
 public class TokenEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false)
+    @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(nullable = false)
+    @Column(name = "queue_position", nullable = false)
     private int queuePosition;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TokenStatus status;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(nullable = false)
+    @Column(name = "last_updated_at", nullable = false)
     private LocalDateTime lastUpdatedAt;
 }

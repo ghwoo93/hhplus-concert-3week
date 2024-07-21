@@ -12,10 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.hhplus.concert.reservation.application.dto.TokenDTO;
-import io.hhplus.concert.reservation.application.exception.TokenExpiredException;
-import io.hhplus.concert.reservation.application.exception.TokenNotFoundException;
 import io.hhplus.concert.reservation.application.facade.ConcertFacade;
 import io.hhplus.concert.reservation.presentation.request.TokenRequest;
+import io.hhplus.concert.reservation.presentation.response.TokenResponse;
 
 @RestController
 @RequestMapping("/api/v1/tokens")
@@ -30,21 +29,27 @@ public class TokenController {
     }
 
     @PostMapping
-    public ResponseEntity<TokenDTO> issueToken(@RequestBody TokenRequest request) {
+    public ResponseEntity<TokenResponse> issueToken(@RequestBody TokenRequest request) {
         TokenDTO tokenDTO = concertFacade.issueToken(request.getUserId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(tokenDTO);
+        TokenResponse response = new TokenResponse(
+            tokenDTO.getToken(),
+            tokenDTO.getStatus(),
+            tokenDTO.getQueuePosition(),
+            tokenDTO.getRemainingTime()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<TokenDTO> checkTokenStatus(@PathVariable String userId) {
-        try {
-            TokenDTO tokenDTO = concertFacade.checkTokenStatus(userId);
-            return ResponseEntity.ok(tokenDTO);
-        } catch (TokenNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (TokenExpiredException e) {
-            return ResponseEntity.status(HttpStatus.GONE).build();
-        }
+    public ResponseEntity<TokenResponse> checkTokenStatus(@PathVariable String userId) {
+        TokenDTO tokenDTO = concertFacade.checkTokenStatus(userId);
+        TokenResponse response = new TokenResponse(
+            tokenDTO.getToken(),
+            tokenDTO.getStatus(),
+            tokenDTO.getQueuePosition(),
+            tokenDTO.getRemainingTime()
+        );
+        return ResponseEntity.ok(response);
     }
 }
 
