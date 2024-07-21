@@ -25,29 +25,29 @@ public class CommonFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         long startTime = System.currentTimeMillis();
 
-        // 공통 보안 체크 (예: CORS 설정)
-        httpResponse.setHeader("Access-Control-Allow-Origin", "*");
-
-        // 기본적인 인증 체크 (예: API 키 확인)
-        String apiKey = httpRequest.getHeader("X-API-Key");
-        if (apiKey == null || apiKey.isEmpty()) {
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+        if (!httpRequest.getRequestURI().equals("/api/v1/tokens")) {
+            // API 키 체크 로직
+            String apiKey = httpRequest.getHeader("X-API-Key");
+            if (apiKey == null || apiKey.isEmpty()) {
+                // 요청 로깅
+                logger.info("Incoming request - Method: {}, URI: {}, API Key: {}",
+                        httpRequest.getMethod(), httpRequest.getRequestURI(), apiKey);
+                HttpServletResponse httpResponse = (HttpServletResponse) response;
+                httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                
+                // 응답 로깅
+                long duration = System.currentTimeMillis() - startTime;
+                logger.info("Outgoing response - Status: {}, Duration: {} ms",
+                        httpResponse.getStatus(), duration);
+                return;
+            }
         }
 
-        // 요청 로깅
-        logger.info("Incoming request - Method: {}, URI: {}, API Key: {}",
-                httpRequest.getMethod(), httpRequest.getRequestURI(), apiKey);
 
         chain.doFilter(request, response);
 
-        // 응답 로깅
-        long duration = System.currentTimeMillis() - startTime;
-        logger.info("Outgoing response - Status: {}, Duration: {} ms",
-                httpResponse.getStatus(), duration);
     }
 }
