@@ -23,6 +23,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean existsById(String userId) {
+        return userRepository.existsById(userId);
+    }
+
+    @Override
     @Transactional
     public BalanceResponse rechargeBalance(String userId, BigDecimal amount) {
         User user = findUserById(userId);

@@ -345,20 +345,16 @@ sequenceDiagram
     TokenService->>DB: 토큰 상태 조회
     alt 토큰이 없음
         TokenService->>DB: 새 토큰 생성
+        TokenService->>TokenService: JWT 토큰 생성
+        alt 토큰 수 < 11
+            TokenService->>DB: 토큰 상태를 ACTIVE로 설정
+        else 토큰 수 >= 11
+            TokenService->>DB: 토큰 상태를 WAITING으로 설정
+        end
     end
     DB-->>TokenService: 토큰 정보 반환
     TokenService-->>ConcertFacade: Token
-    alt Token.status == ACTIVE
-        ConcertFacade-->>API Gateway: TokenDTO (ACTIVE)
-    else Token.status == WAITING
-        ConcertFacade-->>API Gateway: TokenDTO (WAITING)
-    else Token.status == EXPIRED
-        ConcertFacade->>TokenService: createNewToken(userId)
-        TokenService->>DB: 새 토큰 생성
-        DB-->>TokenService: 새 토큰 정보
-        TokenService-->>ConcertFacade: 새 Token
-        ConcertFacade-->>API Gateway: TokenDTO (ACTIVE)
-    end
+    ConcertFacade-->>API Gateway: TokenDTO
     API Gateway-->>User: 토큰 및 대기열 정보 전달
 ```
 
@@ -368,21 +364,22 @@ sequenceDiagram
 sequenceDiagram
     participant User
     participant API Gateway
-    participant Reservation Service
+    participant ReservationController
+    participant ConcertFacade
+    participant ConcertService
     participant DB
 
     User->>API Gateway: 예약 가능 날짜 조회 요청
-    API Gateway->>Reservation Service: 예약 가능 날짜 조회
-    Reservation Service->>DB: 예약 가능 날짜 정보 조회
-    DB-->>Reservation Service: 예약 가능 날짜 정보 반환
-    Reservation Service-->>API Gateway: 예약 가능 날짜 정보 반환
+    API Gateway->>ReservationController: getAvailableConcertDates()
+    ReservationController->>ConcertFacade: getAllConcerts()
+    ConcertFacade->>ConcertService: getAllConcerts()
+    ConcertService->>DB: 예약 가능 날짜 정보 조회
+    DB-->>ConcertService: 예약 가능 날짜 정보 반환
+    ConcertService-->>ConcertFacade: List<Concert>
+    ConcertFacade-->>ReservationController: List<ConcertDTO>
+    ReservationController->>ReservationController: Convert to List<ConcertDateResponse>
+    ReservationController-->>API Gateway: List<ConcertDateResponse>
     API Gateway-->>User: 예약 가능 날짜 정보 전달
-
-    Note over Reservation Service,DB: 실패 시
-    DB-->>Reservation Service: 조회 실패
-    Reservation Service-->>API Gateway: 예약 가능 날짜 조회 실패
-    API Gateway-->>User: 예약 가능 날짜 조회 실패 메시지 전달
-
 ```
 
 ### 예약 가능 콘서트 조회 Use Case
@@ -419,28 +416,22 @@ sequenceDiagram
     participant DB
 
     User->>API Gateway: 좌석 예약 요청
-    API Gateway->>ConcertFacade: reserveSeat(userId, concertId, seatNumber)
+    API Gateway->>ConcertFacade: reserveSeat(SeatReservationRequest)
     ConcertFacade->>TokenService: getTokenStatus(userId)
     TokenService->>DB: 토큰 상태 조회
     DB-->>TokenService: 토큰 정보 반환
     TokenService-->>ConcertFacade: Token
-    alt Token.status != ACTIVE
-        ConcertFacade-->>API Gateway: 예약 불가 (토큰 상태 부적절)
-        API Gateway-->>User: 예약 불가 메시지 전달
-    else Token.status == ACTIVE
-        ConcertFacade->>ReservationService: reserveSeat(userId, concertId, seatNumber)
+    alt Token.status == ACTIVE
+        ConcertFacade->>ReservationService: reserveSeat(concertId, seatNumber, userId, performanceDate)
         ReservationService->>DB: 좌석 예약 상태 업데이트 및 임시 배정 정보 저장
         DB-->>ReservationService: 좌석 예약 정보 반환
-        ReservationService-->>ConcertFacade: 예약 정보
-        ConcertFacade-->>API Gateway: 예약 정보 반환
+        ReservationService-->>ConcertFacade: Reservation (임시 예약 정보 포함)
+        ConcertFacade-->>API Gateway: ReservationResponse (예약 ID 및 만료 시간 포함)
         API Gateway-->>User: 좌석 예약 정보 전달
+    else Token.status != ACTIVE
+        ConcertFacade-->>API Gateway: TokenInvalidStatusException
+        API Gateway-->>User: 예약 불가 메시지 전달
     end
-
-    Note over ReservationService,DB: 실패 시
-    DB-->>ReservationService: 예약 실패
-    ReservationService-->>ConcertFacade: 좌석 예약 실패
-    ConcertFacade-->>API Gateway: 예약 실패
-    API Gateway-->>User: 좌석 예약 실패 메시지 전달
 ```
 
 ### 잔액 충전 요청 Use Case

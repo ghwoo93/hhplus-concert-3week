@@ -1,29 +1,52 @@
 package io.hhplus.concert.reservation.application.facade;
 
-import io.hhplus.concert.reservation.application.dto.*;
-import io.hhplus.concert.reservation.application.exception.*;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import io.hhplus.concert.reservation.application.dto.ConcertDTO;
+import io.hhplus.concert.reservation.application.dto.PaymentDTO;
+import io.hhplus.concert.reservation.application.dto.SeatDTO;
+import io.hhplus.concert.reservation.application.dto.TokenDTO;
+import io.hhplus.concert.reservation.application.exception.InsufficientBalanceException;
+import io.hhplus.concert.reservation.application.exception.ReservationNotFoundException;
+import io.hhplus.concert.reservation.application.exception.TokenExpiredException;
+import io.hhplus.concert.reservation.application.exception.TokenInvalidStatusException;
+import io.hhplus.concert.reservation.application.exception.UserNotFoundException;
 import io.hhplus.concert.reservation.domain.enums.TokenStatus;
-import io.hhplus.concert.reservation.domain.model.*;
-import io.hhplus.concert.reservation.domain.service.*;
+import io.hhplus.concert.reservation.domain.model.Concert;
+import io.hhplus.concert.reservation.domain.model.Reservation;
+import io.hhplus.concert.reservation.domain.model.Token;
+import io.hhplus.concert.reservation.domain.model.User;
+import io.hhplus.concert.reservation.domain.service.ConcertService;
+import io.hhplus.concert.reservation.domain.service.PaymentService;
+import io.hhplus.concert.reservation.domain.service.ReservationService;
+import io.hhplus.concert.reservation.domain.service.TokenService;
+import io.hhplus.concert.reservation.domain.service.UserService;
+import io.hhplus.concert.reservation.infrastructure.entity.ConcertEntity;
+import io.hhplus.concert.reservation.infrastructure.mapper.ConcertMapper;
+import io.hhplus.concert.reservation.infrastructure.mapper.SeatMapper;
 import io.hhplus.concert.reservation.infrastructure.mapper.TokenMapper;
 import io.hhplus.concert.reservation.presentation.request.SeatReservationRequest;
 import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 import io.hhplus.concert.reservation.presentation.response.ReservationResponse;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.List;
-
 @Service
 public class ConcertFacadeImpl implements ConcertFacade {
 
+    private static final Logger logger = LoggerFactory.getLogger(ConcertFacadeImpl.class);
+    
     private final TokenService tokenService;
     private final ConcertService concertService;
     private final ReservationService reservationService;
     private final PaymentService paymentService;
     private final UserService userService;
+
 
     public ConcertFacadeImpl(TokenService tokenService,
                              ConcertService concertService,
@@ -40,6 +63,9 @@ public class ConcertFacadeImpl implements ConcertFacade {
     @Override
     @Transactional
     public TokenDTO issueToken(String userId) {
+        if (!userService.existsById(userId)) {
+            throw new UserNotFoundException();
+        }
         Token token = tokenService.getOrCreateTokenForUser(userId);
         return TokenMapper.toDto(token);
     }
@@ -64,12 +90,17 @@ public class ConcertFacadeImpl implements ConcertFacade {
 
     @Override
     public List<ConcertDTO> getAllConcerts() {
-        return concertService.getAllConcerts();
+        List<Concert> concertEntities = concertService.getAllConcerts();
+        return concertEntities.stream()
+                .map(ConcertMapper::domainToDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<SeatDTO> getSeatsByConcertId(String concertId) {
-        return concertService.getSeatsByConcertId(concertId);
+        return concertService.getSeatsByConcertId(concertId).stream()
+                        .map(SeatMapper::domainToDto)
+                        .collect(Collectors.toList());
     }
 
     @Override
@@ -77,13 +108,16 @@ public class ConcertFacadeImpl implements ConcertFacade {
     public ReservationResponse reserveSeat(SeatReservationRequest request) {
         Token token = tokenService.getTokenStatus(request.getUserId());
         if (token.getStatus() != TokenStatus.ACTIVE) {
-            throw new TokenInvalidStatusException();
+            throw new TokenInvalidStatusException("Token is not active for user: " + request.getUserId());
         }
 
+        Concert concert = concertService.getConcertById(request.getConcertId());
+
         Reservation reservation = reservationService.reserveSeat(
-            request.getConcertId(), 
-            request.getSeatNumber(), 
-            request.getUserId()
+            request.getConcertId(),
+            request.getSeatNumber(),
+            request.getUserId(),
+            concert.getDate()
         );
 
         return new ReservationResponse(reservation.getId(), reservation.getReservedAt().plusMinutes(5));
@@ -104,9 +138,11 @@ public class ConcertFacadeImpl implements ConcertFacade {
     @Override
     @Transactional
     public PaymentDTO processPayment(String reservationId, BigDecimal amount, String token) {
-        if (!tokenService.isTokenValid(token)) {
-            throw new TokenInvalidStatusException();
-        }
+        // boolean isTokenValid = tokenService.isTokenValid(token);
+        // logger.debug("isTokenValid: {}", isTokenValid);
+        // if (!isTokenValid) {
+        //     throw new TokenInvalidStatusException("Token is not valid for payment processing for reservation: " + reservationId);
+        // }
 
         Reservation reservation = reservationService.getReservation(reservationId);
         if (reservation == null) {

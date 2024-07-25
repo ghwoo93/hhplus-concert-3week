@@ -2,16 +2,19 @@ package io.hhplus.concert.reservation.domain.service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.time.LocalDate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.hhplus.concert.reservation.application.exception.SeatAlreadyReservedException;
+import io.hhplus.concert.reservation.domain.enums.SeatStatus;
 import io.hhplus.concert.reservation.domain.model.Reservation;
-import io.hhplus.concert.reservation.infrastructure.entity.SeatEntity;
+import io.hhplus.concert.reservation.infrastructure.entity.ReservationEntity;
 import io.hhplus.concert.reservation.infrastructure.mapper.ReservationMapper;
 import io.hhplus.concert.reservation.infrastructure.repository.ReservationRepository;
 import io.hhplus.concert.reservation.infrastructure.repository.SeatRepository;
@@ -31,28 +34,34 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional
-    public Reservation reserveSeat(String concertId, int seatNumber, String userId) {
-        SeatEntity seatEntity = seatRepository.findByConcertIdAndSeatNumber(concertId, seatNumber)
-            .orElseThrow(() -> new RuntimeException("Seat not found"));
-    
-        if (seatEntity.isReserved()) {
-            throw new SeatAlreadyReservedException();
-        }
-    
-        seatEntity.reserve(userId);
-        seatRepository.save(seatEntity);
-    
-        Reservation reservation = new Reservation(
-            UUID.randomUUID().toString(),
-            userId,
+    public Reservation reserveSeat(String concertId, int seatNumber, String userId, LocalDate performanceDate) {
+        LocalDateTime reservedUntil = LocalDateTime.now().plusMinutes(5);
+
+        logger.debug("[reserveSeat]"+ userId + " is trying to reserve seat " + seatNumber + " for concert " + concertId);
+
+        int updatedRows = seatRepository.updateSeatStatus(
             concertId,
             seatNumber,
-            "TEMPORARY",
-            LocalDateTime.now()
+            SeatStatus.AVAILABLE,
+            SeatStatus.RESERVED,
+            userId,
+            reservedUntil
         );
-    
-        return ReservationMapper.toDomain(reservationRepository.save(ReservationMapper.toEntity(reservation)));
+
+        logger.debug("[reserveSeat]"+ updatedRows + " rows updated for seat " + seatNumber + " for concert " + concertId);
+
+        if (updatedRows == 0) {
+            throw new SeatAlreadyReservedException();
+        }
+
+        String reservationId = UUID.randomUUID().toString();
+        Reservation reservation = createReservation(reservationId, concertId, seatNumber, userId, performanceDate);
+        logger.debug("[reserveSeat]"+ reservationId + " is created for " + userId + " for concert " + concertId);
+        
+        Reservation savedEntity = saveReservation(reservation);
+        logger.debug("[reserveSeat]saved entity:"+savedEntity.toString());
+
+        return savedEntity;
     }
 
     @Override
@@ -72,14 +81,15 @@ public class ReservationServiceImpl implements ReservationService {
         });
     }
 
-    private Reservation createReservation(String concertId, int seatNumber, String userId) {
+    private Reservation createReservation(String id, String concertId, int seatNumber, String userId, LocalDate performanceDate) {
         return new Reservation(
-            UUID.randomUUID().toString(),
+            id,
             userId,
             concertId,
             seatNumber,
             "TEMPORARY",
-            LocalDateTime.now()
+            LocalDateTime.now(),
+            performanceDate
         );
     }
 

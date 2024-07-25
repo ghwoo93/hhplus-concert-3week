@@ -12,6 +12,7 @@ public class ReservationMapper {
         entity.setSeatNumber(reservation.getSeatNumber());
         entity.setReservationStatus(reservation.getReservationStatus());
         entity.setReservedAt(reservation.getReservedAt());
+        entity.setPerformanceDate(reservation.getPerformanceDate());
         return entity;
     }
 
@@ -22,7 +23,8 @@ public class ReservationMapper {
             entity.getConcertId(),
             entity.getSeatNumber(),
             entity.getReservationStatus(),
-            entity.getReservedAt()
+            entity.getReservedAt(),
+            entity.getPerformanceDate()
         );
     }
 }

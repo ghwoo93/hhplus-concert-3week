@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.hhplus.concert.reservation.domain.enums.SeatStatus;
 import io.hhplus.concert.reservation.infrastructure.entity.SeatEntity;
 import io.hhplus.concert.reservation.infrastructure.repository.SeatRepository;
 
@@ -20,16 +21,28 @@ public class SeatReservationScheduler {
         this.seatRepository = seatRepository;
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 60000) // 1분마다 실행
     @Transactional
     public void releaseExpiredReservations() {
         LocalDateTime now = LocalDateTime.now();
-        List<SeatEntity> expiredSeats = seatRepository.findByReservedUntilLessThan(now);
+        
+        List<SeatEntity> expiredSeats = seatRepository.findByIdStatusAndReservedUntilLessThan(
+            SeatStatus.RESERVED, now);
+
         for (SeatEntity seat : expiredSeats) {
-            seat.setReserved(false);
-            seat.setReservedBy(null);
-            seat.setReservedUntil(null);
-            seatRepository.save(seat);
+            int updatedRows = seatRepository.updateSeatStatus(
+                seat.getId().getConcertId(),
+                seat.getId().getSeatNumber(),
+                SeatStatus.RESERVED,
+                SeatStatus.AVAILABLE,
+                null,
+                null
+            );
+
+            if (updatedRows == 0) {
+                // 업데이트에 실패한 경우 (이미 다른 프로세스에 의해 처리됐을 수 있음)
+                // 로깅 또는 추가 처리를 수행할 수 있습니다.
+            }
         }
     }
 }

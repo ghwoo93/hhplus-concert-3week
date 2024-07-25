@@ -1,52 +1,51 @@
-CREATE TABLE USERS (
+CREATE TABLE users (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     balance DECIMAL(10, 2) NOT NULL,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE CONCERTS (
+CREATE TABLE concerts (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
-    concertName VARCHAR(255) NOT NULL,
+    concert_name VARCHAR(255) NOT NULL,
     date DATE NOT NULL
 );
 
-CREATE TABLE SEATS (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    concertId VARCHAR(255) NOT NULL,
-    seatNumber INT NOT NULL,
-    isReserved BOOLEAN NOT NULL,
-    reservedBy VARCHAR(255),
-    reservedUntil TIMESTAMP,
-    UNIQUE (concertId, seatNumber)
+CREATE TABLE seats (
+    concert_id VARCHAR(255) NOT NULL,
+    seat_number INT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    reserved_by VARCHAR(255),
+    reserved_until TIMESTAMP,
+    PRIMARY KEY (concert_id, seat_number, status)
 );
 
-CREATE TABLE RESERVATIONS (
+CREATE TABLE reservations (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
-    userId VARCHAR(255) NOT NULL,
-    concertId VARCHAR(255) NOT NULL,
-    seatNumber INT NOT NULL,
-    reservationStatus VARCHAR(50) NOT NULL,
-    reservedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    performanceDate DATE NOT NULL
+    user_id VARCHAR(255) NOT NULL,
+    concert_id VARCHAR(255) NOT NULL,
+    seat_number INT NOT NULL,
+    reservation_status VARCHAR(50) NOT NULL,
+    reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    performance_date DATE NOT NULL
 );
 
-CREATE TABLE PAYMENTS (
+CREATE TABLE payments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    userId VARCHAR(255) NOT NULL,
-    reservationId VARCHAR(255) NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    reservation_id VARCHAR(255) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    paymentStatus VARCHAR(50) NOT NULL,
-    paidAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    payment_status VARCHAR(50) NOT NULL,
+    paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE TOKENS (
+CREATE TABLE tokens (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
-    userId VARCHAR(255) NOT NULL,
-    queuePosition INT NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    queue_position INT NOT NULL,
     status VARCHAR(50) NOT NULL,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expiresAt TIMESTAMP NOT NULL,
-    lastUpdatedAt TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    last_updated_at TIMESTAMP NOT NULL
 );
