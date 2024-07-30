@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.hhplus.concert.reservation.application.dto.ConcertDTO;
@@ -136,37 +137,25 @@ public class ConcertFacadeImpl implements ConcertFacade {
     }
 
     @Override
-    @Transactional
-    public PaymentDTO processPayment(String reservationId, BigDecimal amount, String token) {
-        // boolean isTokenValid = tokenService.isTokenValid(token);
-        // logger.debug("isTokenValid: {}", isTokenValid);
-        // if (!isTokenValid) {
-        //     throw new TokenInvalidStatusException("Token is not valid for payment processing for reservation: " + reservationId);
-        // }
-
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public PaymentDTO processPayment(String reservationId, BigDecimal amount, String userId) {
         Reservation reservation = reservationService.getReservation(reservationId);
         if (reservation == null) {
             throw new ReservationNotFoundException();
         }
 
-        User user = userService.getUser(reservation.getUserId());
+        User user = userService.getUser(userId);
         if (user == null) {
             throw new UserNotFoundException();
         }
 
-        if (user.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException();
+        try {
+            BalanceResponse balanceResponse = userService.deductBalance(userId, amount);
+            PaymentDTO paymentDTO = paymentService.processPayment(userId, reservationId, amount);
+            reservationService.updateReservationStatus(reservationId, "COMPLETED");
+            return paymentDTO;
+        } catch (InsufficientBalanceException e) {
+            throw new InsufficientBalanceException("Insufficient balance for user: " + userId);
         }
-
-        // 잔액 차감
-        BalanceResponse balanceResponse = userService.deductBalance(user.getId(), amount);
-
-        // 결제 처리
-        PaymentDTO paymentDTO = paymentService.processPayment(user.getId(), reservationId, amount);
-
-        // 예약 상태 업데이트
-        reservationService.updateReservationStatus(reservationId, "COMPLETED");
-
-        return paymentDTO;
     }
 }

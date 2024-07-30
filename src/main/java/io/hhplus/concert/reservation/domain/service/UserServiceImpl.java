@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
         User updatedUser = saveUser(user);
         return createBalanceResponse(updatedUser.getBalance());
     }
-
+    
     @Override
     @Transactional(readOnly = true)
     public BalanceResponse getBalance(String userId) {
@@ -59,6 +59,7 @@ public class UserServiceImpl implements UserService {
         
         return createBalanceResponse(BigDecimal.valueOf(balance));
     }
+
     @Override
     @Transactional(readOnly = true)
     public User getUser(String userId) {

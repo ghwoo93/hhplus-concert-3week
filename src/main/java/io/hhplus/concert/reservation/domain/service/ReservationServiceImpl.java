@@ -71,7 +71,9 @@ public class ReservationServiceImpl implements ReservationService {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted while trying to acquire lock", e);
         } finally {
-            lock.unlock();
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
