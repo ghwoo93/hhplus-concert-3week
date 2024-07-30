@@ -2,7 +2,7 @@ package io.hhplus.concert.reservation.domain.service;
 
 import java.math.BigDecimal;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +16,11 @@ import io.hhplus.concert.reservation.presentation.response.BalanceResponse;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RedisTemplate<String, Long> redisTemplate;
 
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, RedisTemplate<String, Long> redisTemplate) {
         this.userRepository = userRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -32,16 +33,31 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public BalanceResponse rechargeBalance(String userId, BigDecimal amount) {
         User user = findUserById(userId);
-        user.rechargeBalance(amount);
+        String balanceKey = "user:balance:" + userId;
+        
+        Long newBalance = redisTemplate.opsForValue().increment(balanceKey, amount.longValue());
+        if (newBalance == null) {
+            throw new RuntimeException("Failed to update balance in Redis");
+        }
+        
+        user.setBalance(BigDecimal.valueOf(newBalance));
         User updatedUser = saveUser(user);
         return createBalanceResponse(updatedUser.getBalance());
     }
-
+    
     @Override
     @Transactional(readOnly = true)
     public BalanceResponse getBalance(String userId) {
-        User user = findUserById(userId);
-        return createBalanceResponse(user.getBalance());
+        String balanceKey = "user:balance:" + userId;
+        Long balance = redisTemplate.opsForValue().get(balanceKey);
+        
+        if (balance == null) {
+            User user = findUserById(userId);
+            balance = user.getBalance().longValue();
+            redisTemplate.opsForValue().set(balanceKey, balance);
+        }
+        
+        return createBalanceResponse(BigDecimal.valueOf(balance));
     }
 
     @Override
@@ -54,7 +70,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public BalanceResponse deductBalance(String userId, BigDecimal amount) {
         User user = findUserById(userId);
-        user.deductBalance(amount);
+        String balanceKey = "user:balance:" + userId;
+        
+        Long newBalance = redisTemplate.opsForValue().decrement(balanceKey, amount.longValue());
+        if (newBalance == null || newBalance < 0) {
+            throw new RuntimeException("Insufficient balance");
+        }
+        
+        user.setBalance(BigDecimal.valueOf(newBalance));
         User updatedUser = saveUser(user);
         return createBalanceResponse(updatedUser.getBalance());
     }
